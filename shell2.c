@@ -6,9 +6,57 @@
 #include "stdlib.h"
 #include "unistd.h"
 #include <string.h>
+#include <signal.h>
 
+
+// not complete <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+void handle_signal(int signal) {
+    // pid_t pgid = getpgrp(); // get process group ID of current process
+    // kill(-pgid, SIGTERM);   // send SIGTERM to every process in the group
+    printf("You typed Control-C!\n");
+
+}
+
+
+
+typedef struct Node
+{
+    char *data[10];
+    struct Node *prev;
+    struct Node *next;
+}node, *pnode;
+
+
+void copyArgv(char* src[10], char* dst[10]){
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (src[i] != NULL) {
+            dst[i] = malloc(strlen(src[i])+1); // allocate memory for the destination string
+            strcpy(dst[i], src[i]);  // copy from the source string to the destination string
+        } else {
+            break;  // stop looping if there are no more arguments
+        }
+    }  
+}
+
+
+
+
+void printArgv(char* src[10]){
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (src[i] != NULL) {
+            printf("Argument %d: %s\n", i, src[i]);
+        } else {
+            break;  // stop looping if there are no more arguments
+        }
+    }
+    
+}
 
 int main() {
+
+signal(SIGINT, handle_signal);
 char command[1024];
 char *token;
 char *outfile;
@@ -16,7 +64,15 @@ char prompt[1024];
 int i, fd, amper, redirect, err, append ,retid, status, flag, haveJobFlag;
 char *argv[10];
 
+pnode root = (pnode)malloc(sizeof(node));
+root->prev = NULL;
+root->next = NULL;
+
+pnode current = root;
 strcpy(prompt, "hello: ");
+
+
+int flag2 = 0;
 
 while (1)
 {
@@ -29,9 +85,14 @@ while (1)
     /* parse command line */
     i = 0;
     token = strtok (command," ");
+    // char* tmp;
     while (token != NULL)
     {
         argv[i] = token;
+        // current->data[i] = (char*)malloc(sizeof(token));
+        // strcpy(current->data[i], token);
+        current->data[i] = token;
+
         token = strtok (NULL, " ");
         i++;
     }
@@ -40,6 +101,36 @@ while (1)
     /* Is command empty */
     if (argv[0] == NULL)
         continue;
+
+
+    copyArgv(argv, current->data);
+    printArgv(current->data);
+    // // copyArgv(argv);
+
+    current->next = (pnode)malloc(sizeof(node));
+    current->next->prev = current;
+    printf("\nim here\n");
+    fflush(stdout);
+
+    
+    printf("\nim here2\n");
+    fflush(stdout);
+    current = current->next;
+    printf("\nim here3\n");
+    fflush(stdout);
+    
+    if (flag2)
+    {
+        printf("curr data= %s, %s", *current->prev->data, *current->prev->prev->data);
+    }
+    flag2 = 1;    
+
+    if (!strcmp(argv[0], "quit")){
+        printf("\ngood bye\n");
+        fflush(stdout);
+        exit(0);
+    }
+
 
     // printf("\ni= %d, 1= %s, 2= %s, 3= %s\n", i, argv[0], argv[1], argv[2]);
     // fflush(stdout);

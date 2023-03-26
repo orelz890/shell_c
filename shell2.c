@@ -27,7 +27,7 @@ typedef struct Node
 }node, *pnode;
 
 
-void copyArgv(char* src[10], char* dst[10]){
+void deepCopyArgv(char* src[10], char* dst[10]){
     int i;
     for (i = 0; i < 10; i++) {
         if (src[i] != NULL) {
@@ -39,6 +39,30 @@ void copyArgv(char* src[10], char* dst[10]){
     }  
 }
 
+
+void freeCopyArgv(char* src[10]){
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (src[i] != NULL) {
+            free(src[i]);
+        } else {
+            break;  // stop looping if there are no more arguments
+        }
+    }  
+}
+
+
+
+void copyArgv(char* src[10], char* dst[10]){
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (src[i] != NULL) {
+            strcpy(dst[i], src[i]);  // copy from the source string to the destination string
+        } else {
+            break;  // stop looping if there are no more arguments
+        }
+    }  
+}
 
 
 
@@ -53,6 +77,24 @@ void printArgv(char* src[10]){
     }
     
 }
+
+// void saveCommendData(pnode current, char* argv[10]){
+//     deepCopyArgv(argv, current->data);
+//     printArgv(current->data);
+//     // // copyArgv(argv);
+
+//     current->next = (pnode)malloc(sizeof(node));
+//     current->next->prev = current;
+//     printf("\nim here\n");
+//     fflush(stdout);
+
+//     printf("\nim here2\n");
+//     fflush(stdout);
+//     current = current->next;
+//     printf("\nim here3\n");
+//     fflush(stdout);
+
+// }
 
 int main() {
 
@@ -103,7 +145,7 @@ while (1)
         continue;
 
 
-    copyArgv(argv, current->data);
+    deepCopyArgv(argv, current->data);
     printArgv(current->data);
     // // copyArgv(argv);
 
@@ -129,6 +171,37 @@ while (1)
         printf("\ngood bye\n");
         fflush(stdout);
         exit(0);
+    }
+
+
+    if (!strcmp(argv[0], "!!")){
+        pnode temp = current->prev->prev;
+
+        if (temp != NULL)
+        {
+            printf("\nim lost1\n");
+            fflush(stdout);
+            while (temp != NULL && !strcmp(*temp->data, "!!"))
+            {
+                printf("\nim lost2\n");
+                fflush(stdout);
+                temp = temp->prev;
+                printf("\nim lost3\n");
+                fflush(stdout);
+            }
+
+        }
+        
+        if (temp == NULL)
+        {
+            printf("\nim lost4\n");
+            fflush(stdout);
+
+            continue;
+        }
+        printf("\nim lost5\n");
+        fflush(stdout);
+        deepCopyArgv(temp->data, argv);
     }
 
 

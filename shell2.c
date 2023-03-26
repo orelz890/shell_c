@@ -246,6 +246,41 @@ int main()
         }
         else
             redirect = 0;
+        // printf("\ni= %d, 1= %s, 2= %s, 3= %s\n", i, argv[0], argv[1], argv[2]);
+        // fflush(stdout);
+        if (i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
+        {
+            // printf("\nim here prompt\n");
+            // fflush(stdout);
+            strcpy(prompt, argv[2]);
+            strcat(prompt, ": ");
+            continue;
+        }
+
+        if (i == 2 && !strcmp(argv[0], "cd"))
+        {
+            int result = chdir(argv[1]);
+            if (result != 0)
+            {
+                perror("cd");
+            }
+            else
+            {
+                char cwd[10000];
+                getcwd(cwd, sizeof(cwd));
+                printf("curr path: %s\n", cwd);
+            }
+        }
+
+        /* Does command line end with & */
+        if (!haveJobFlag && !strcmp(argv[i - 1], "&"))
+        {
+            amper = 1;
+            argv[i - 1] = NULL;
+            haveJobFlag = 1;
+        }
+        else
+            amper = 0;
 
         if (!haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
         {

@@ -8,10 +8,71 @@
 #include <string.h>
 #include <signal.h>
 
-// not complete <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#define MAX_VARIABLES 1024
+#define MAX_VARIABLE_NAME_LEN 128
+#define MAX_VARIABLE_VALUE_LEN 1024
 
+typedef struct
+{
+    char name[MAX_VARIABLE_NAME_LEN];
+    char value[MAX_VARIABLE_VALUE_LEN];
+} variable;
 
-void handle_tstp(int s) {
+variable variables[MAX_VARIABLES];
+int num_variables = 0;
+
+// Function to save a variable
+void save_variable(char *name, char *value)
+{
+    if (num_variables < MAX_VARIABLES)
+    {
+        strcpy(variables[num_variables].name, name);
+        strcpy(variables[num_variables].value, value);
+        num_variables++;
+        printf("Variable saved.\n");
+    }
+    else
+    {
+        printf("Maximum number of variables reached.\n");
+    }
+}
+
+// Function to retrieve a variable
+char *get_variable(char *name)
+{
+    int i;
+    for (i = 0; i < num_variables; i++)
+    {
+        if (strcmp(variables[i].name, name) == 0)
+        {
+            char *ans = (char *)malloc(strlen(variables[i].value) + 1);
+            strcpy(ans, variables[i].value);
+            return ans;
+        }
+    }
+    return "";
+}
+
+void changeVarsToData(char *src[10])
+{
+    int i;
+    for (i = 0; i < 10; i++)
+    {
+        if (src[i] != NULL && strlen(src[i]) > 1 && src[i][0] == '$' && src[i][1] != '?')
+        {
+            // printf("Argument %d: %s\n", i, src[i]);
+            char *var = get_variable(src[i]);
+            if (strcmp(var, ""))
+            {
+                memset(src[i], 0, strlen(src[i]));
+                strcpy(src[i], var);
+            }
+        }
+    }
+}
+
+void handle_tstp(int s)
+{
     return;
 }
 
@@ -182,6 +243,13 @@ int main()
             exit(0);
         }
 
+        if (argv[0][0] == '$' && !strcmp(argv[1], "="))
+        {
+            printf("argv[0]= %s, argv[2]= %s", argv[0], argv[2]);
+            fflush(stdout);
+            save_variable(argv[0], argv[2]);
+        }
+
         if (!strcmp(argv[0], "!!"))
         {
             pnode temp = current->prev->prev;
@@ -323,6 +391,7 @@ int main()
                 status = WEXITSTATUS(system(ch));
                 printf("status: %d\n", status);
             }
+            changeVarsToData(argv);
         }
 
         if (flag)

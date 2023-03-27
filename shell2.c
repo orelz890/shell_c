@@ -9,10 +9,17 @@
 #include <signal.h>
 
 // not complete <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-void handle_signal(int signal)
+
+
+void handle_tstp(int s) {
+    return;
+}
+
+void handle_signal(int s)
 {
-    // pid_t pgid = getpgrp(); // get process group ID of current process
-    // kill(-pgid, SIGTERM);   // send SIGTERM to every process in the group
+    pid_t pgid = getpgrp(); // get process group ID of current process
+    signal(SIGTSTP, handle_tstp);
+    killpg(pgid, SIGTSTP); // send SIGTERM to every process in the group
     printf("You typed Control-C!\n");
 }
 
@@ -160,18 +167,11 @@ int main()
 
         current->next = (pnode)malloc(sizeof(node));
         current->next->prev = current;
-        printf("\nim here\n");
-        fflush(stdout);
-
-        printf("\nim here2\n");
-        fflush(stdout);
         current = current->next;
-        printf("\nim here3\n");
-        fflush(stdout);
 
         if (flag2)
         {
-            printf("curr data= %s, %s", *current->prev->data, *current->prev->prev->data);
+            printf("curr data= %s, %s\n", *current->prev->data, *current->prev->prev->data);
         }
         flag2 = 1;
 
@@ -204,7 +204,6 @@ int main()
             {
                 printf("\nim lost4\n");
                 fflush(stdout);
-
                 continue;
             }
             printf("\nim lost5\n");
@@ -309,13 +308,21 @@ int main()
 
         if (!haveJobFlag && i > 1 && !strcmp(argv[0], "echo"))
         {
-            // int j = 1;
+            if (!strcmp(argv[1], "$?"))
+            {
+                int status;
+                int counter = 0;
+                char *ch = (char *)malloc(sizeof(char));
+                while (current->prev->prev->data[counter] != NULL)
+                {
+                    ch = strcat(ch, strcat(current->prev->prev->data[counter], " "));
+                    counter++;
+                }
 
-            // while (j < i)
-            // {
-
-            //     j++;
-            // }
+                printf("command: %s\n", ch);
+                status = WEXITSTATUS(system(ch));
+                printf("status: %d\n", status);
+            }
         }
 
         if (flag)

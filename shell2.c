@@ -243,7 +243,21 @@ int main()
             exit(0);
         }
 
-        if (argv[0][0] == '$' && !strcmp(argv[1], "="))
+        if (i == 2 && !(strcmp(argv[0], "read")))
+        {
+            char str[1022];
+            char str2[2] = "$";
+
+            fgets(str, sizeof(str), stdin);
+            str[strlen(str) - 1] = '\0';
+
+            printf("str= %s", str);
+            fflush(stdout);
+            save_variable(strcat(str2, argv[1]), str );
+        }
+        
+
+        if (i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "="))
         {
             printf("argv[0]= %s, argv[2]= %s", argv[0], argv[2]);
             fflush(stdout);

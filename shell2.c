@@ -53,10 +53,10 @@ char *get_variable(char *name)
     return "";
 }
 
-void changeVarsToData(char *src[10])
+void changeVarsToData(char *src[128])
 {
     int i;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 128; i++)
     {
         if (src[i] != NULL && strlen(src[i]) > 1 && src[i][0] == '$' && src[i][1] != '?')
         {
@@ -86,15 +86,15 @@ void handle_signal(int s)
 
 typedef struct Node
 {
-    char *data[10];
+    char *data[128];
     struct Node *prev;
     struct Node *next;
 } node, *pnode;
 
-void deepCopyArgv(char *src[10], char *dst[10])
+void deepCopyArgv(char *src[128], char *dst[128])
 {
     int i;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 128; i++)
     {
         if (src[i] != NULL)
         {
@@ -108,10 +108,10 @@ void deepCopyArgv(char *src[10], char *dst[10])
     }
 }
 
-void freeCopyArgv(char *src[10])
+void freeCopyArgv(char *src[128])
 {
     int i;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 128; i++)
     {
         if (src[i] != NULL)
         {
@@ -124,13 +124,15 @@ void freeCopyArgv(char *src[10])
     }
 }
 
-void copyArgv(char *src[10], char *dst[10])
+void copyArgv(char *src[128], char *dst[128])
 {
     int i;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 128; i++)
     {
         if (src[i] != NULL)
         {
+            printf("%d,",i);
+            fflush(stdout);
             strcpy(dst[i], src[i]); // copy from the source string to the destination string
         }
         else
@@ -140,14 +142,14 @@ void copyArgv(char *src[10], char *dst[10])
     }
 }
 
-void printArgv(char *src[10])
+void printArgv(char *src[128])
 {
     int i;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 128; i++)
     {
         if (src[i] != NULL)
         {
-            printf("Argument %d: %s\n", i, src[i]);
+            printf("Argument %d: %s       and len= %ld\n", i, src[i], strlen(src[i]));
         }
         else
         {
@@ -175,6 +177,8 @@ void printArgv(char *src[10])
 // }
 
 int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = 0, flagSeenFi = 0; 
+char fullIfCommend[1024];
+
 
 int main()
 {
@@ -185,7 +189,7 @@ int main()
     char *outfile;
     char prompt[1024];
     int i, fd, amper, redirect, err, append, retid, status, flag, haveJobFlag;
-    char *argv[10];
+    char *argv[128];
 
     pnode root = (pnode)malloc(sizeof(node));
     root->prev = NULL;
@@ -229,39 +233,89 @@ int main()
             flagSeenIf = 1;
             printf("%s", ">");
             char *commends[128];
-            char fullCommend[1024];
-            memset(fullCommend, 0, strlen(fullCommend));
-            strcpy(fullCommend, "if [ \"$(");
+            memset(fullIfCommend, 0, strlen(fullIfCommend));
+            int i;
+            for (i = 0; i < 128; i++)
+            {
+                if (argv[i] != NULL)
+                {
+                    // printf("%d, %ld,", i, sizeof(command));
+                    // fflush(stdout);
+                    commends[i] = (char*)malloc(sizeof(command));
+                    strcpy(commends[i], argv[i]);
+                    strcat(fullIfCommend, argv[i]);
+                    fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
+                    strcat(fullIfCommend, " ");
+                }
+                else
+                {
+                    break; // stop looping if there are no more arguments
+                }
+            }
+            // printf("\n\n%s", commends[3]);
+            // fflush(stdout);
+            strcat(fullIfCommend, "; ");
+
             char commend[1024];
             memset(commend, 0, strlen(commend));
             fgets(commend, 1024, stdin);
-            int i = 0;
+            // i = 0;
             if (!strcmp(commend, "then\n"))
             {
+                strcat(fullIfCommend, "then ");
+                // commends[i] = malloc(sizeof(command));
+                // strcpy(commends[i++], "then");
+                
                 printf("%s", ">");
-                strcat(fullCommend, command);
-                strcat(fullCommend, ")\" !="); // continue here
+                // strcat(fullIfCommend, ")\" != \"\" ]"); // continue here
                 int flagElse = 0;
                 while (fgets(commend, 1024, stdin) && strcmp(commend, "fi\n"))
                 {
                     printf("%s", ">");
-                    if (!strcmp(commend, "else"))
+                    if (!strcmp(commend, "else\n"))
                     {
+                        // commends[i] = (char *)malloc(sizeof(command));
+                        // strcpy(commends[i], "else");
+                        strcat(fullIfCommend, " else ");
                         flagElse = 1;
+                    }else{
+                        strcat(fullIfCommend, commend);
+                        fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
+                        strcat(fullIfCommend, ";");
+
+                        // commends[i] = (char *)malloc(sizeof(command));
+                        // strcpy(commends[i], commend);
+                        // commends[i][strcspn(commends[i], "\n")] = '\0';
+                        // strcat(commends[i], ";");
                     }
-                    commends[i] = (char *)malloc(sizeof(strlen(commend)));
-                    strcpy(commends[i], commend);
                     i++;
                     memset(commend, 0, strlen(commend));
+                    
                 }
-                commends[i] = (char *)malloc(strlen(commend));
-                strcpy(commends[i], commend);
-                if (flagElse)
+                if (flagElse == 0)
                 {
                     // think what to do about wrong syntax && save coomend
                     printf("syntax error near unexpected token `fi'\n");
                     continue;
                 }
+                strcat(fullIfCommend, " ");
+                strcat(fullIfCommend, commend);
+                fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
+
+
+                // printf("fullIfCommend= %s\n\n",fullIfCommend);
+
+                system(fullIfCommend);
+
+                // fflush(stdout);
+                // commends[i] = (char *)malloc(strlen(commend));
+                // strcpy(commends[i], commend);
+                // commends[i][strcspn(commends[i], "\n")] = '\0';
+                // // printf("commends[10]= %s", commends[10]);
+                // printArgv(commends);
+                // fflush(stdout);
+                // // freeCopyArgv(argv);
+                // deepCopyArgv(commends, argv);
             }
             else
             {
@@ -274,7 +328,7 @@ int main()
         {
             deepCopyArgv(argv, current->data);
         }
-        printArgv(current->data);
+        printArgv(argv);
         // // copyArgv(argv);
 
         current->next = (pnode)malloc(sizeof(node));

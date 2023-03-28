@@ -230,116 +230,62 @@ int main()
 
         if (!strcmp(argv[0], "if"))
         {
-            flagSeenIf = 1;
-            printf("%s", ">");
-            char *commends[128];
+            // Copying all the commend parts together + getting all the if requierments from the user
             memset(fullIfCommend, 0, strlen(fullIfCommend));
             int i;
             for (i = 0; i < 128; i++)
             {
                 if (argv[i] != NULL)
                 {
-                    // printf("%d, %ld,", i, sizeof(command));
-                    // fflush(stdout);
-                    commends[i] = (char*)malloc(sizeof(command));
-                    strcpy(commends[i], argv[i]);
                     strcat(fullIfCommend, argv[i]);
                     fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
                     strcat(fullIfCommend, " ");
                 }
-                else
-                {
-                    break; // stop looping if there are no more arguments
+                else{
+                    break;
                 }
             }
-            // printf("\n\n%s", commends[3]);
-            // fflush(stdout);
             strcat(fullIfCommend, "; ");
-
-            char commend[1024];
-            memset(commend, 0, strlen(commend));
-            fgets(commend, 1024, stdin);
-            // i = 0;
-            if (!strcmp(commend, "then\n"))
+            
+            memset(command, 0, strlen(command));
+            fgets(command, 1024, stdin);
+            if (!strcmp(command, "then\n"))
             {
                 strcat(fullIfCommend, "then ");
-                // commends[i] = malloc(sizeof(command));
-                // strcpy(commends[i++], "then");
-                
-                printf("%s", ">");
-                // strcat(fullIfCommend, ")\" != \"\" ]"); // continue here
                 int flagElse = 0;
-                while (fgets(commend, 1024, stdin) && strcmp(commend, "fi\n"))
+                while (fgets(command, 1024, stdin) && strcmp(command, "fi\n"))
                 {
-                    printf("%s", ">");
-                    if (!strcmp(commend, "else\n"))
+                    if (!strcmp(command, "else\n"))
                     {
-                        // commends[i] = (char *)malloc(sizeof(command));
-                        // strcpy(commends[i], "else");
                         strcat(fullIfCommend, " else ");
                         flagElse = 1;
                     }else{
-                        strcat(fullIfCommend, commend);
+                        strcat(fullIfCommend, command);
                         fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
                         strcat(fullIfCommend, ";");
-
-                        // commends[i] = (char *)malloc(sizeof(command));
-                        // strcpy(commends[i], commend);
-                        // commends[i][strcspn(commends[i], "\n")] = '\0';
-                        // strcat(commends[i], ";");
                     }
                     i++;
-                    memset(commend, 0, strlen(commend));
-                    
-                }
-                if (flagElse == 0)
-                {
-                    // think what to do about wrong syntax && save coomend
-                    printf("syntax error near unexpected token `fi'\n");
-                    continue;
+                    memset(command, 0, strlen(command));
                 }
                 strcat(fullIfCommend, " ");
-                strcat(fullIfCommend, commend);
+                strcat(fullIfCommend, command);
                 fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
-
-
-                // printf("fullIfCommend= %s\n\n",fullIfCommend);
-
-                system(fullIfCommend);
-
-                // fflush(stdout);
-                // commends[i] = (char *)malloc(strlen(commend));
-                // strcpy(commends[i], commend);
-                // commends[i][strcspn(commends[i], "\n")] = '\0';
-                // // printf("commends[10]= %s", commends[10]);
-                // printArgv(commends);
-                // fflush(stdout);
-                // // freeCopyArgv(argv);
-                // deepCopyArgv(commends, argv);
             }
-            else
-            {
-                // think what to do about wrong syntax && save coomend
-                printf("syntax error near unexpected token `fi'\n");
-                continue;
-            }
-        }
-        else
-        {
-            deepCopyArgv(argv, current->data);
-        }
-        printArgv(argv);
-        // // copyArgv(argv);
 
+            // Saving the proper if commend in our struct for future usage
+            memset(argv[0], 0, strlen(argv[0]));
+            strcpy(argv[0], "if");
+            strcpy(argv[1], fullIfCommend);
+            argv[2] = NULL;
+
+            system(fullIfCommend);
+        }
+
+        deepCopyArgv(argv, current->data);
         current->next = (pnode)malloc(sizeof(node));
         current->next->prev = current;
         current = current->next;
 
-        if (flag2)
-        {
-            printf("curr data= %s, %s\n", *current->prev->data, *current->prev->prev->data);
-        }
-        flag2 = 1;
 
         if (!strcmp(argv[0], "quit"))
         {
@@ -374,27 +320,23 @@ int main()
 
             if (temp != NULL)
             {
-                printf("\nim lost1\n");
-                fflush(stdout);
+
                 while (temp != NULL && !strcmp(*temp->data, "!!"))
                 {
-                    printf("\nim lost2\n");
-                    fflush(stdout);
                     temp = temp->prev;
-                    printf("\nim lost3\n");
-                    fflush(stdout);
                 }
             }
-
             if (temp == NULL)
             {
-                printf("\nim lost4\n");
-                fflush(stdout);
                 continue;
             }
-            printf("\nim lost5\n");
-            fflush(stdout);
-            deepCopyArgv(temp->data, argv);
+            if (!strcmp(temp->data[0], "if"))
+            {
+                system(temp->data[1]);
+            }
+            else{
+                deepCopyArgv(temp->data, argv);
+            }
         }
 
         // printf("\ni= %d, 1= %s, 2= %s, 3= %s\n", i, argv[0], argv[1], argv[2]);

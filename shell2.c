@@ -2,8 +2,8 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include "stdio.h"
-#include "errno.h"
 #include "stdlib.h"
+#include "errno.h"
 #include "unistd.h"
 #include <string.h>
 #include <signal.h>
@@ -174,6 +174,8 @@ void printArgv(char *src[10])
 
 // }
 
+int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = 0, flagSeenFi = 0; 
+
 int main()
 {
 
@@ -222,7 +224,56 @@ int main()
         if (argv[0] == NULL)
             continue;
 
-        deepCopyArgv(argv, current->data);
+        if (!strcmp(argv[0], "if"))
+        {
+            flagSeenIf = 1;
+            printf("%s", ">");
+            char *commends[128];
+            char fullCommend[1024];
+            memset(fullCommend, 0, strlen(fullCommend));
+            strcpy(fullCommend, "if [ \"$(");
+            char commend[1024];
+            memset(commend, 0, strlen(commend));
+            fgets(commend, 1024, stdin);
+            int i = 0;
+            if (!strcmp(commend, "then\n"))
+            {
+                printf("%s", ">");
+                strcat(fullCommend, command);
+                strcat(fullCommend, ")\" !="); // continue here
+                int flagElse = 0;
+                while (fgets(commend, 1024, stdin) && strcmp(commend, "fi\n"))
+                {
+                    printf("%s", ">");
+                    if (!strcmp(commend, "else"))
+                    {
+                        flagElse = 1;
+                    }
+                    commends[i] = (char *)malloc(sizeof(strlen(commend)));
+                    strcpy(commends[i], commend);
+                    i++;
+                    memset(commend, 0, strlen(commend));
+                }
+                commends[i] = (char *)malloc(strlen(commend));
+                strcpy(commends[i], commend);
+                if (flagElse)
+                {
+                    // think what to do about wrong syntax && save coomend
+                    printf("syntax error near unexpected token `fi'\n");
+                    continue;
+                }
+            }
+            else
+            {
+                // think what to do about wrong syntax && save coomend
+                printf("syntax error near unexpected token `fi'\n");
+                continue;
+            }
+        }
+        else
+        {
+            deepCopyArgv(argv, current->data);
+        }
         printArgv(current->data);
         // // copyArgv(argv);
 
@@ -253,9 +304,8 @@ int main()
 
             printf("str= %s", str);
             fflush(stdout);
-            save_variable(strcat(str2, argv[1]), str );
+            save_variable(strcat(str2, argv[1]), str);
         }
-        
 
         if (i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "="))
         {
@@ -414,37 +464,38 @@ int main()
         }
 
         /* for commands not part of the shell command language */
-
-        if (fork() == 0)
-        {
-            /* redirection of IO ? */
-            if (redirect)
+        if (flagSeenIf == 0 || flagSeenIf == 1 && flagSeenThen == 1 && flagSeenFi == 1){
+            if (fork() == 0)
             {
-                // printf("im here");
-                // fflush(stdout);
-                fd = open(outfile, O_WRONLY | (append ? O_APPEND : O_TRUNC) | O_CREAT, 0660);
-                if (fd == -1)
+                /* redirection of IO ? */
+                if (redirect)
                 {
-                    perror("open");
-                    exit(1);
+                    // printf("im here");
+                    // fflush(stdout);
+                    fd = open(outfile, O_WRONLY | (append ? O_APPEND : O_TRUNC) | O_CREAT, 0660);
+                    if (fd == -1)
+                    {
+                        perror("open");
+                        exit(1);
+                    }
+                    close(STDOUT_FILENO);
+                    dup(fd);
+                    close(fd);
                 }
-                close(STDOUT_FILENO);
-                dup(fd);
-                close(fd);
+                else if (err)
+                {
+                    // printf("im here err");
+                    // fflush(stdout);
+                    fd = creat(outfile, 0660);
+                    close(STDERR_FILENO);
+                    dup2(fd, STDERR_FILENO);
+                    close(fd);
+                }
+                execvp(argv[0], argv);
             }
-            else if (err)
-            {
-                // printf("im here err");
-                // fflush(stdout);
-                fd = creat(outfile, 0660);
-                close(STDERR_FILENO);
-                dup2(fd, STDERR_FILENO);
-                close(fd);
-            }
-            execvp(argv[0], argv);
+            /* parent continues here */
+            if (amper == 0)
+                retid = wait(&status);
         }
-        /* parent continues here */
-        if (amper == 0)
-            retid = wait(&status);
     }
 }

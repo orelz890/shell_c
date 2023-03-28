@@ -133,11 +133,11 @@ void copyArgv(char *src[128], char *dst[128])
         {
             printf("%d,",i);
             fflush(stdout);
-            strcpy(dst[i], src[i]); // copy from the source string to the destination string
+            strcpy(dst[i], src[i]);
         }
         else
         {
-            break; // stop looping if there are no more arguments
+            break;
         }
     }
 }
@@ -145,36 +145,26 @@ void copyArgv(char *src[128], char *dst[128])
 void printArgv(char *src[128])
 {
     int i;
-    for (i = 0; i < 128; i++)
+    for (i = 1; i < 128; i++)
     {
         if (src[i] != NULL)
         {
-            printf("Argument %d: %s       and len= %ld\n", i, src[i], strlen(src[i]));
+            // printf("Argument %d: %s       and len= %ld\n", i, src[i], strlen(src[i]));
+            if (src[i+1] != NULL)
+            {
+                printf("%s ", src[i]);
+            }else {
+                printf("%s\n", src[i]);
+                break;
+            }
         }
         else
         {
-            break; // stop looping if there are no more arguments
+            break;
         }
     }
 }
 
-// void saveCommendData(pnode current, char* argv[10]){
-//     deepCopyArgv(argv, current->data);
-//     printArgv(current->data);
-//     // // copyArgv(argv);
-
-//     current->next = (pnode)malloc(sizeof(node));
-//     current->next->prev = current;
-//     printf("\nim here\n");
-//     fflush(stdout);
-
-//     printf("\nim here2\n");
-//     fflush(stdout);
-//     current = current->next;
-//     printf("\nim here3\n");
-//     fflush(stdout);
-
-// }
 
 int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = 0, flagSeenFi = 0; 
 char fullIfCommend[1024];
@@ -287,40 +277,30 @@ int main()
         current = current->next;
 
 
-        if (!strcmp(argv[0], "quit"))
-        {
+        if (!strcmp(argv[0], "quit")){
             printf("\ngood bye\n");
             fflush(stdout);
             exit(0);
         }
 
-        if (i == 2 && !(strcmp(argv[0], "read")))
-        {
+        if (i == 2 && !(strcmp(argv[0], "read"))){
             char str[1022];
             char str2[2] = "$";
 
             fgets(str, sizeof(str), stdin);
             str[strlen(str) - 1] = '\0';
-
-            printf("str= %s", str);
-            fflush(stdout);
             save_variable(strcat(str2, argv[1]), str);
         }
 
-        if (i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "="))
-        {
-            printf("argv[0]= %s, argv[2]= %s", argv[0], argv[2]);
-            fflush(stdout);
+        if (i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "=")){
             save_variable(argv[0], argv[2]);
         }
 
-        if (!strcmp(argv[0], "!!"))
-        {
+        if (!strcmp(argv[0], "!!")){
             pnode temp = current->prev->prev;
 
             if (temp != NULL)
             {
-
                 while (temp != NULL && !strcmp(*temp->data, "!!"))
                 {
                     temp = temp->prev;
@@ -339,12 +319,8 @@ int main()
             }
         }
 
-        // printf("\ni= %d, 1= %s, 2= %s, 3= %s\n", i, argv[0], argv[1], argv[2]);
-        // fflush(stdout);
         if (i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
         {
-            // printf("\nim here prompt\n");
-            // fflush(stdout);
             strcpy(prompt, argv[2]);
             strcat(prompt, ": ");
             continue;
@@ -362,27 +338,14 @@ int main()
 
         if (!haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">"))
         {
-            // printf("\nim here >\n");
-            // fflush(stdout);
             redirect = 1;
             outfile = argv[i - 1];
             flag = 1;
             haveJobFlag = 1;
-            // printf("\nim here2 >\n");
-            // fflush(stdout);
         }
         else
             redirect = 0;
-        // printf("\ni= %d, 1= %s, 2= %s, 3= %s\n", i, argv[0], argv[1], argv[2]);
-        // fflush(stdout);
-        if (i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
-        {
-            // printf("\nim here prompt\n");
-            // fflush(stdout);
-            strcpy(prompt, argv[2]);
-            strcat(prompt, ": ");
-            continue;
-        }
+
 
         if (i == 2 && !strcmp(argv[0], "cd"))
         {
@@ -399,20 +362,9 @@ int main()
             }
         }
 
-        /* Does command line end with & */
-        if (!haveJobFlag && !strcmp(argv[i - 1], "&"))
-        {
-            amper = 1;
-            argv[i - 1] = NULL;
-            haveJobFlag = 1;
-        }
-        else
-            amper = 0;
 
         if (!haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
         {
-            // printf("\nim here 2>\n");
-            // fflush(stdout);
             err = 1;
             outfile = argv[i - 1];
             flag = 1;
@@ -423,8 +375,7 @@ int main()
 
         if (!haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">>"))
         {
-            // printf("\nim here >>\n");
-            // fflush(stdout);
+
             redirect = 1;
             append = 1;
             outfile = argv[i - 1];
@@ -450,8 +401,11 @@ int main()
                 printf("command: %s\n", ch);
                 status = WEXITSTATUS(system(ch));
                 printf("status: %d\n", status);
+            } else {
+                changeVarsToData(argv);
+                printArgv(argv);
+                continue;
             }
-            changeVarsToData(argv);
         }
 
         if (flag)
@@ -460,38 +414,32 @@ int main()
         }
 
         /* for commands not part of the shell command language */
-        if (flagSeenIf == 0 || flagSeenIf == 1 && flagSeenThen == 1 && flagSeenFi == 1){
-            if (fork() == 0)
+        if (fork() == 0)
+        {
+            /* redirection of IO ? */
+            if (redirect)
             {
-                /* redirection of IO ? */
-                if (redirect)
+                fd = open(outfile, O_WRONLY | (append ? O_APPEND : O_TRUNC) | O_CREAT, 0660);
+                if (fd == -1)
                 {
-                    // printf("im here");
-                    // fflush(stdout);
-                    fd = open(outfile, O_WRONLY | (append ? O_APPEND : O_TRUNC) | O_CREAT, 0660);
-                    if (fd == -1)
-                    {
-                        perror("open");
-                        exit(1);
-                    }
-                    close(STDOUT_FILENO);
-                    dup(fd);
-                    close(fd);
+                    perror("open");
+                    exit(1);
                 }
-                else if (err)
-                {
-                    // printf("im here err");
-                    // fflush(stdout);
-                    fd = creat(outfile, 0660);
-                    close(STDERR_FILENO);
-                    dup2(fd, STDERR_FILENO);
-                    close(fd);
-                }
-                execvp(argv[0], argv);
+                close(STDOUT_FILENO);
+                dup(fd);
+                close(fd);
             }
-            /* parent continues here */
-            if (amper == 0)
-                retid = wait(&status);
+            else if (err)
+            {
+                fd = creat(outfile, 0660);
+                close(STDERR_FILENO);
+                dup2(fd, STDERR_FILENO);
+                close(fd);
+            }
+            execvp(argv[0], argv);
         }
+        /* parent continues here */
+        if (amper == 0)
+            retid = wait(&status);
     }
 }

@@ -12,6 +12,8 @@
 #define MAX_VARIABLE_NAME_LEN 128
 #define MAX_VARIABLE_VALUE_LEN 1024
 
+int inHistory = 0;
+
 typedef struct
 {
     char name[MAX_VARIABLE_NAME_LEN];
@@ -78,10 +80,17 @@ void handle_tstp(int s)
 
 void handle_signal(int s)
 {
-    pid_t pgid = getpgrp(); // get process group ID of current process
-    signal(SIGTSTP, handle_tstp);
-    killpg(pgid, SIGTSTP); // send SIGTERM to every process in the group
-    printf("You typed Control-C!\n");
+    if (!inHistory)
+    {
+        pid_t pgid = getpgrp(); // get process group ID of current process
+        signal(SIGTSTP, handle_tstp);
+        killpg(pgid, SIGTSTP); // send SIGTERM to every process in the group
+        printf("You typed Control-C!\n");
+    }
+    else
+    {
+        // exit from history mode
+    }
 }
 
 typedef struct Node
@@ -151,7 +160,7 @@ void copyArgv(char *src[128], char *dst[128])
     {
         if (src[i] != NULL)
         {
-            printf("%d,",i);
+            printf("%d,", i);
             fflush(stdout);
             strcpy(dst[i], src[i]);
         }
@@ -170,10 +179,37 @@ void printArgv(char *src[128])
         if (src[i] != NULL)
         {
             // printf("Argument %d: %s       and len= %ld\n", i, src[i], strlen(src[i]));
-            if (src[i+1] != NULL)
+            if (src[i + 1] != NULL)
+            {
+                printf("%s\n", src[i]);
+            }
+            else
+            {
+                printf("%s\n", src[i]);
+                break;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
+void printCmd(char *src[128])
+{
+    int i;
+    for (i = 0; i < 128; i++)
+    {
+        if (src[i] != NULL)
+        {
+            // printf("Argument %d: %s       and len= %ld\n", i, src[i], strlen(src[i]));
+            if (src[i + 1] != NULL)
             {
                 printf("%s ", src[i]);
-            }else {
+            }
+            else
+            {
                 printf("%s\n", src[i]);
                 break;
             }
@@ -187,6 +223,95 @@ void printArgv(char *src[128])
 
 
 
+void split(char **argv, int *pn, char *cmd, char *s)
+{
+    char *token;
+    token = strtok(cmd, s);
+    int i = 0;
+    while (token != NULL)
+    {
+        argv[i] = malloc(sizeof(token));
+        strcpy(argv[i], token);
+        token = strtok(NULL, s);
+        i++;
+    }
+    argv[i] = NULL;
+    *pn = i;
+}
+
+void handlePipes(char **argv, char *cmd)
+{
+    int nr = 0;
+    split(argv, &nr, cmd, "|");
+
+    int *fd[2];
+    int pc;
+
+    char *tmp[128];
+
+    for (int i = 0; i < nr; i++)
+    {
+        fd[i] = (int *)malloc(sizeof(int));
+        split(tmp, &pc, argv[i], " ");
+        if (i != nr - 1)
+        {
+            if (pipe(fd[i]) < 0)
+            {
+                perror("Error on creating pipes\n");
+                return;
+            }
+        }
+        if (fork() == 0)
+        {
+            if (i != nr - 1)
+            {
+                if (dup2(fd[i][1], 1) < 0)
+                {
+                    perror("Error duplicating file descriptor\n");
+                    exit(EXIT_FAILURE);
+                }
+                close(fd[i][0]);
+                close(fd[i][1]);
+            }
+
+            if (i != 0)
+            {
+                if (dup2(fd[i - 1][0], 0) < 0)
+                {
+                    perror("Error duplicating file descriptor\n");
+                    exit(EXIT_FAILURE);
+                }
+                close(fd[i - 1][1]);
+                close(fd[i - 1][0]);
+            }
+            execvp(tmp[0], tmp);
+            perror("Error executing command");
+            exit(EXIT_FAILURE);
+        }
+
+        if (i != 0)
+        {
+            close(fd[i - 1][0]);
+            close(fd[i - 1][1]);
+        }
+        wait(NULL);
+    }
+}
+
+char *merge(char *argv[128])
+{
+    char *result = (char *)malloc(sizeof(char)); // Allocate memory for the result string
+    *result = '\0';                              // Initialize the result string as an empty string
+
+    // Loop through each string in the array and concatenate it to the result string
+    for (int i = 0; argv[i] != NULL; i++)
+    {
+        strcat(result, argv[i]);
+        strcat(result, " ");
+    }
+
+    return result;
+}
 
 int main()
 {
@@ -198,6 +323,8 @@ int main()
     char prompt[1024];
     int i, fd, amper, redirect, err, append, retid, status, flag, haveJobFlag;
     char *argv[128];
+
+    int pipesNum = 0;
 
     pnode root = (pnode)malloc(sizeof(node));
     root->prev = NULL;
@@ -220,6 +347,52 @@ int main()
         fgets(command, 1024, stdin);
         command[strlen(command) - 1] = '\0';
 
+        if (strchr(command, '|'))
+        {
+            current->data[0] = (char *)malloc(strlen(command) + 1);
+            strcpy(current->data[0], command);
+            current->next = (pnode)malloc(sizeof(node));
+            current->next->prev = current;
+            current = current->next;
+            handlePipes(argv, command);
+            continue;
+        }
+        // printf("%s\n", command);
+        if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
+        {
+            while (1)
+            {
+                if (!strcmp(command, "\033[A"))
+                {
+                    printCmd(current->prev->data);
+                    char *tmp = merge(current->prev->data);
+                    // printf("tmp: %s\n", tmp);
+                    strcpy(command, tmp);
+
+                    inHistory = 1;
+                    if (current->prev)
+                    {
+                        current = current->prev;
+                    }
+                }
+                else // down
+                {
+                    printCmd(current->next->data);
+                    char *tmp = merge(current->next->data);
+                    // printf("tmp: %s\n", tmp);
+                    strcpy(command, tmp);
+                    inHistory = 1;
+                    if (current->next)
+                    {
+                        current = current->next;
+                    }
+                }
+                break;
+            }
+
+            // continue;
+        }
+
         /* parse command line */
         i = 0;
         token = strtok(command, " ");
@@ -230,7 +403,6 @@ int main()
             // current->data[i] = (char*)malloc(sizeof(token));
             // strcpy(current->data[i], token);
             current->data[i] = token;
-
             token = strtok(NULL, " ");
             i++;
         }
@@ -254,6 +426,7 @@ int main()
             {
                 if (flagDoThen == 1)
                 {
+
                     flagCanEnter = 1;
                 }else{
                     flagCanEnter = 0;
@@ -262,6 +435,7 @@ int main()
                 flagSeenThen = 1;
                 flagIsStream = 1;
             }
+
         }
 
         if (!strcmp(argv[0], "else")){
@@ -288,20 +462,27 @@ int main()
                 flagCanEnter = 1;
             }
         }
+        if (!inHistory)
+        {
 
-        deepCopyArgv(argv, current->data);
-        current->next = (pnode)malloc(sizeof(node));
-        current->next->prev = current;
-        current = current->next;
+            deepCopyArgv(argv, current->data);
+            current->next = (pnode)malloc(sizeof(node));
+            current->next->prev = current;
+            current = current->next;
+        }
 
+        inHistory = 0;
 
-        if (!strcmp(argv[0], "quit")){
+        if (!strcmp(argv[0], "quit"))
+        {
             printf("\ngood bye\n");
             fflush(stdout);
             exit(0);
         }
 
+
         if (flagCanEnter == 1 && i == 2 && !(strcmp(argv[0], "read"))){
+
             char str[1022];
             char str2[2] = "$";
 
@@ -309,6 +490,7 @@ int main()
             str[strlen(str) - 1] = '\0';
             save_variable(strcat(str2, argv[1]), str);
         }
+
 
         if (flagCanEnter == 1 && i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "=")){
             save_variable(argv[0], argv[2]);
@@ -318,6 +500,7 @@ int main()
         // fflush(stdout);
 
         if (flagCanEnter == 1 && !strcmp(argv[0], "!!")){
+
             pnode temp = current->prev->prev;
 
             if (temp != NULL)
@@ -331,7 +514,9 @@ int main()
             {
                 continue;
             }
+
             deepCopyArgv(temp->data, argv);
+
         }
 
         if (flagCanEnter == 1 && i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
@@ -369,10 +554,8 @@ int main()
         else
             redirect = 0;
 
-        // printf("im here can u see me? 899\n");
-        // fflush(stdout);
-
         if (flagCanEnter == 1 && i == 2 && !strcmp(argv[0], "cd"))
+
         {
             int result = chdir(argv[1]);
             if (result != 0)
@@ -389,6 +572,7 @@ int main()
 
 
         if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
+
         {
             err = 1;
             outfile = argv[i - 1];
@@ -429,7 +613,9 @@ int main()
                 printf("command: %s\n", ch);
                 status = WEXITSTATUS(system(ch));
                 printf("status: %d\n", status);
-            } else {
+            }
+            else
+            {
                 changeVarsToData(argv);
                 printArgv(argv);
                 continue;

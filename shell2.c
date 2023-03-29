@@ -108,6 +108,26 @@ void deepCopyArgv(char *src[128], char *dst[128])
     }
 }
 
+void deleteFirstFromArgv(char *src[128])
+{
+    int i;
+    for (i = 0; i < 127; i++)
+    {
+        if (src[i+1] != NULL)
+        {
+            // printf("%d,", i);
+            // fflush(stdout);
+            memset(src[i], 0, strlen(src[i]));
+            strcpy(src[i], src[i + 1]);
+        }
+        else
+        {
+            src[i] = NULL;
+            break; // stop looping if there are no more arguments
+        }
+    }
+}
+
 void freeCopyArgv(char *src[128])
 {
     int i;
@@ -166,8 +186,6 @@ void printArgv(char *src[128])
 }
 
 
-int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = 0, flagSeenFi = 0; 
-char fullIfCommend[1024];
 
 
 int main()
@@ -185,6 +203,9 @@ int main()
     root->prev = NULL;
     root->next = NULL;
 
+    int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0, flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1; 
+    char fullIfCommend[1024];
+
     pnode current = root;
     strcpy(prompt, "hello: ");
 
@@ -192,6 +213,7 @@ int main()
 
     while (1)
     {
+        flagIsStream = 0;
         haveJobFlag = 0;
         flag = 0;
         printf("%s", prompt);
@@ -218,57 +240,53 @@ int main()
         if (argv[0] == NULL)
             continue;
 
-        if (!strcmp(argv[0], "if"))
-        {
-            // Copying all the commend parts together + getting all the if requierments from the user
-            memset(fullIfCommend, 0, strlen(fullIfCommend));
-            int i;
-            for (i = 0; i < 128; i++)
-            {
-                if (argv[i] != NULL)
-                {
-                    strcat(fullIfCommend, argv[i]);
-                    fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
-                    strcat(fullIfCommend, " ");
-                }
-                else{
-                    break;
-                }
-            }
-            strcat(fullIfCommend, "; ");
-            
-            memset(command, 0, strlen(command));
-            fgets(command, 1024, stdin);
-            if (!strcmp(command, "then\n"))
-            {
-                strcat(fullIfCommend, "then ");
-                int flagElse = 0;
-                while (fgets(command, 1024, stdin) && strcmp(command, "fi\n"))
-                {
-                    if (!strcmp(command, "else\n"))
-                    {
-                        strcat(fullIfCommend, " else ");
-                        flagElse = 1;
-                    }else{
-                        strcat(fullIfCommend, command);
-                        fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
-                        strcat(fullIfCommend, ";");
-                    }
-                    i++;
-                    memset(command, 0, strlen(command));
-                }
-                strcat(fullIfCommend, " ");
-                strcat(fullIfCommend, command);
-                fullIfCommend[strcspn(fullIfCommend, "\n")] = '\0';
-            }
 
-            // Saving the proper if commend in our struct for future usage
-            memset(argv[0], 0, strlen(argv[0]));
-            strcpy(argv[0], "if");
-            strcpy(argv[1], fullIfCommend);
-            argv[2] = NULL;
+        if (!strcmp(argv[0], "if")){
+            flagSeenIf = 1;
+            flagIsStream = 1;
+            i--;
 
-            system(fullIfCommend);
+            deleteFirstFromArgv(argv);
+        }
+
+        if (!strcmp(argv[0], "then")){
+            if (flagSeenIf == 1)
+            {
+                if (flagDoThen == 1)
+                {
+                    flagCanEnter = 1;
+                }else{
+                    flagCanEnter = 0;
+                }
+                
+                flagSeenThen = 1;
+                flagIsStream = 1;
+            }
+        }
+
+        if (!strcmp(argv[0], "else")){
+            if(flagSeenThen == 1){
+                if (flagDoThen == 0)
+                {
+                    flagCanEnter = 1;
+                }else{
+                    flagCanEnter = 0;
+                }
+                flagSeenElse = 1;
+                flagIsStream = 1;
+            }
+        }
+
+        if (!strcmp(argv[0], "fi")){
+            if (flagSeenElse == 1)
+            {
+                flagSeenIf = 0;
+                flagSeenThen = 0;
+                flagDoThen = -1;
+                flagSeenElse = 0;
+                flagIsStream = 1;
+                flagCanEnter = 1;
+            }
         }
 
         deepCopyArgv(argv, current->data);
@@ -283,7 +301,7 @@ int main()
             exit(0);
         }
 
-        if (i == 2 && !(strcmp(argv[0], "read"))){
+        if (flagCanEnter == 1 && i == 2 && !(strcmp(argv[0], "read"))){
             char str[1022];
             char str2[2] = "$";
 
@@ -292,11 +310,14 @@ int main()
             save_variable(strcat(str2, argv[1]), str);
         }
 
-        if (i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "=")){
+        if (flagCanEnter == 1 && i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "=")){
             save_variable(argv[0], argv[2]);
         }
 
-        if (!strcmp(argv[0], "!!")){
+        // printf("im here can u see me? 699");
+        // fflush(stdout);
+
+        if (flagCanEnter == 1 && !strcmp(argv[0], "!!")){
             pnode temp = current->prev->prev;
 
             if (temp != NULL)
@@ -310,33 +331,35 @@ int main()
             {
                 continue;
             }
-            if (!strcmp(temp->data[0], "if"))
-            {
-                system(temp->data[1]);
-            }
-            else{
-                deepCopyArgv(temp->data, argv);
-            }
+            deepCopyArgv(temp->data, argv);
         }
 
-        if (i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
+        if (flagCanEnter == 1 && i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
         {
             strcpy(prompt, argv[2]);
             strcat(prompt, ": ");
             continue;
         }
 
+        // printf("im here can u see me? 799\n");
+        // fflush(stdout);
+
+
         /* Does command line end with & */
-        if (!haveJobFlag && !strcmp(argv[i - 1], "&"))
+        if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[i - 1], "&"))
         {
             amper = 1;
             argv[i - 1] = NULL;
             haveJobFlag = 1;
         }
-        else
+        else{
             amper = 0;
+        }
 
-        if (!haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">"))
+        // printf("im here can u see me? 800\n");
+        // fflush(stdout);
+
+        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">"))
         {
             redirect = 1;
             outfile = argv[i - 1];
@@ -346,8 +369,10 @@ int main()
         else
             redirect = 0;
 
+        // printf("im here can u see me? 899\n");
+        // fflush(stdout);
 
-        if (i == 2 && !strcmp(argv[0], "cd"))
+        if (flagCanEnter == 1 && i == 2 && !strcmp(argv[0], "cd"))
         {
             int result = chdir(argv[1]);
             if (result != 0)
@@ -363,7 +388,7 @@ int main()
         }
 
 
-        if (!haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
+        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
         {
             err = 1;
             outfile = argv[i - 1];
@@ -373,7 +398,7 @@ int main()
         else
             err = 0;
 
-        if (!haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">>"))
+        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">>"))
         {
 
             redirect = 1;
@@ -385,7 +410,10 @@ int main()
         else
             append = 0;
 
-        if (!haveJobFlag && i > 1 && !strcmp(argv[0], "echo"))
+
+
+    
+        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[0], "echo"))
         {
             if (!strcmp(argv[1], "$?"))
             {
@@ -408,14 +436,32 @@ int main()
             }
         }
 
+        // printf("im here can u see me? 0\n");
+        // fflush(stdout);
+
         if (flag)
         {
             argv[i - 2] = NULL;
         }
 
+
         /* for commands not part of the shell command language */
-        if (fork() == 0)
+        pid_t pid = fork();
+
+        if (pid == 0)
         {
+            // If we seen if before & we got a ragular commend, check that you have seen all the necessary syntax
+            if (flagSeenIf == 1 && flagIsStream == 0 && flagSeenThen == 0)
+            {
+                flagSeenIf = 0;
+                flagSeenThen = 0;
+                flagDoThen = -1;
+                flagSeenElse = 0;
+                printf("syntax error near unexpected token `fi'\n");
+                fflush(stdout);
+                continue;
+            }
+            
             /* redirection of IO ? */
             if (redirect)
             {
@@ -436,10 +482,33 @@ int main()
                 dup2(fd, STDERR_FILENO);
                 close(fd);
             }
-            execvp(argv[0], argv);
+
+            if (flagSeenIf == 0 || (flagSeenIf == 1 && flagSeenThen == 0) ||
+                (flagIsStream == 0 && ((flagDoThen == 1 && flagSeenThen == 1 && flagSeenElse == 0) 
+                    || (flagDoThen == 0 && flagSeenElse == 1))
+                    ))
+            {
+                // printf("flagSeenIf= %d, flagIsStream= %d, flagDoThen= %d, flagSeenThen= %d, flagSeenElse= %d",flagSeenIf,flagIsStream, flagDoThen, flagSeenThen, flagSeenElse);
+                // fflush(stdout);
+                execvp(argv[0], argv);
+            }
+                
+                
+
         }
+            
         /* parent continues here */
-        if (amper == 0)
+        if (amper == 0){
+            // int ans;
+            // retid = waitpid(pid, &ans, 0);
             retid = wait(&status);
+            if (flagSeenIf == 1 && flagDoThen == -1 && flagSeenThen == 0)
+            {
+                // printf("%d,\n", WEXITSTATUS(status));
+                // fflush(stdout);
+                flagDoThen = 1 - WEXITSTATUS(status);
+            }
+        }
+
     }
 }

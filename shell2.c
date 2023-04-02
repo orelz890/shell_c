@@ -319,8 +319,9 @@ int main()
     char *token;
     char *outfile;
     char prompt[1024];
-    int i, fd, amper, redirect, err, append, retid, status, flag, haveJobFlag;
+    int i, fd, amper, redirect, err, append, retid, status = 0, flag, haveJobFlag;
     char *argv[128];
+    char *argv2[128];
 
     int pipesNum = 0;
 
@@ -344,6 +345,25 @@ int main()
         printf("%s", prompt);
         fgets(command, 1024, stdin);
         command[strlen(command) - 1] = '\0';
+
+
+        if (strchr(command, '|'))
+        {
+            current->data[0] = (char *)malloc(strlen(command) + 1);
+            strcpy(current->data[0], command);
+            current->next = (pnode)malloc(sizeof(node));
+            current->next->prev = current;
+            current = current->next;
+            if (!strncmp(command, "if", 2)){
+                char* output_string = strchr(command, ' ') + 1;
+                handlePipes(argv2, output_string);
+            }else{
+                handlePipes(argv2, command);
+                continue;
+            }
+        }
+        
+        // printf("%s\n", command);
 
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
         {
@@ -616,18 +636,18 @@ int main()
         {
             if (!strcmp(argv[1], "$?"))
             {
-                int status;
                 int counter = 0;
                 char *ch = (char *)malloc(sizeof(char));
-                while (current->prev->prev->data[counter] != NULL)
+                while (current->prev->prev != NULL && current->prev->prev->data[counter] != NULL)
                 {
                     ch = strcat(ch, strcat(current->prev->prev->data[counter], " "));
                     counter++;
                 }
 
-                printf("command: %s\n", ch);
-                status = WEXITSTATUS(system(ch));
+                // printf("command: %s\n", ch);
+                // status = WEXITSTATUS(system(ch));
                 printf("status: %d\n", status);
+                continue;
             }
             else
             {
@@ -636,9 +656,6 @@ int main()
                 continue;
             }
         }
-
-        // printf("im here can u see me? 0\n");
-        // fflush(stdout);
 
         if (flag)
         {
@@ -692,16 +709,12 @@ int main()
             }
         }
 
+        
         /* parent continues here */
-        if (amper == 0)
-        {
-            // int ans;
-            // retid = waitpid(pid, &ans, 0);
+        if (amper == 0){
             retid = wait(&status);
             if (flagSeenIf == 1 && flagDoThen == -1 && flagSeenThen == 0)
             {
-                // printf("%d,\n", WEXITSTATUS(status));
-                // fflush(stdout);
                 flagDoThen = 1 - WEXITSTATUS(status);
             }
         }

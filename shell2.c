@@ -343,7 +343,9 @@ int main()
         fgets(command, 1024, stdin);
         command[strlen(command) - 1] = '\0';
 
+
         // Get last commends handler
+
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
         {
             while (1)
@@ -355,9 +357,11 @@ int main()
                 } else // down
                 {
                     curr = current->next;
+
                 }
                 if (curr != NULL)
                 {
+
                     printCmd(curr->data);
                     char *tmp = merge(curr->data);
                     strcpy(command, tmp);
@@ -376,19 +380,26 @@ int main()
 
         }
 
-        // Handle pipes
         if (strchr(command, '|'))
         {
-            current->data[0] = (char *)malloc(strlen(command) + 1);
-            strcpy(current->data[0], command);
-            current->next = (pnode)malloc(sizeof(node));
-            current->next->prev = current;
-            current = current->next;
-            // handle the if command case
-            if (!strncmp(command, "if", 2)){
-                char* output_string = strchr(command, ' ') + 1;
+            if (!inHistory)
+            {
+                current->data[0] = (char *)malloc(sizeof(command) + 1);
+                strcpy(current->data[0], command);
+                pnode next = (pnode)malloc(sizeof(node));
+                current->next = next;
+                current->next->prev = current;
+                current = current->next;
+                current->next = NULL;
+            }
+
+            if (!strncmp(command, "if", 2))
+            {
+                char *output_string = strchr(command, ' ') + 1;
                 handlePipes(argv2, output_string);
-            }else{
+            }
+            else
+            {
                 handlePipes(argv2, command);
                 continue;
             }
@@ -478,6 +489,7 @@ int main()
         // If we didnt save the data yet, do so
         if (!inHistory)
         {
+
             deepCopyArgv(argv, current->data);
             pnode next = (pnode)malloc(sizeof(node));
             current->next = next;
@@ -684,9 +696,9 @@ int main()
             }
         }
 
-        
         /* parent continues here */
-        if (amper == 0){
+        if (amper == 0)
+        {
             retid = wait(&status);
             if (flagSeenIf == 1 && flagDoThen == -1 && flagSeenThen == 0)
             {

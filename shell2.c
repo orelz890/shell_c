@@ -319,23 +319,20 @@ int main()
     char *token;
     char *outfile;
     char prompt[1024];
-    int i, fd, amper, redirect, err, append, retid, status = 0, flag, haveJobFlag;
+    int i, fd, amper, redirect, err, append, retid, flag, haveJobFlag, status = 0,
+        pipesNum = 0, flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0,
+        flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1, flag2 = 0;
     char *argv[128];
     char *argv2[128];
 
-    int pipesNum = 0;
-
+    // Init our history storage
     pnode root = (pnode)malloc(sizeof(node));
     root->prev = NULL;
     root->next = NULL;
-
-    int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0, flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1;
-    char fullIfCommend[1024];
-    int tmp = 0;
     pnode current = root;
-    strcpy(prompt, "hello: ");
 
-    int flag2 = 0;
+    // Print the prompt
+    strcpy(prompt, "hello: ");
 
     while (1)
     {
@@ -346,48 +343,43 @@ int main()
         fgets(command, 1024, stdin);
         command[strlen(command) - 1] = '\0';
 
-        // printf("%s\n", command);
+
+        // Get last commends handler
 
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
         {
             while (1)
             {
+                pnode curr = NULL;
                 if (!strcmp(command, "\033[A"))
                 {
-                    printCmd(current->prev->data);
-                    char *tmp = merge(current->prev->data);
-                    strcpy(command, tmp);
-                    inHistory = 1;
-                    if (current->prev->prev)
-                    {
+                    curr = current->prev;
+                } else // down
+                {
+                    curr = current->next;
 
-                        current = current->prev;
-                    }
-                    else
-                    {
-                        printf("Error: You react the last command\n");
-                    }
                 }
-                else // down
+                if (curr != NULL)
                 {
 
-                    if (current->next)
+                    printCmd(curr->data);
+                    char *tmp = merge(curr->data);
+                    strcpy(command, tmp);
+                    inHistory = 1;
+                    if (curr)
                     {
-                        printCmd(current->next->data);
-                        char *tmp = merge(current->next->data);
-                        // printf("tmp: %s\n", tmp);
-                        strcpy(command, tmp);
-                        inHistory = 1;
-                        current = current->next;
-                    } else {
-                        printf("Error: There is no command exists\n");
+                        current = curr;
                     }
+                }else {
+                    printf("Error: there is no command exists\n");
                 }
+                
+
                 break;
             }
 
-            // continue;
         }
+
         if (strchr(command, '|'))
         {
             if (!inHistory)
@@ -413,6 +405,7 @@ int main()
             }
         }
 
+
         /* parse command line */
         i = 0;
         token = strtok(command, " ");
@@ -422,7 +415,6 @@ int main()
             argv[i] = token;
             current->data[i] = (char *)malloc(sizeof(token));
             strcpy(current->data[i], token);
-            // current->data[i] = token;
             token = strtok(NULL, " ");
             i++;
         }
@@ -432,6 +424,7 @@ int main()
         if (argv[0] == NULL)
             continue;
 
+        // Handle if command
         if (!strcmp(argv[0], "if"))
         {
             flagSeenIf = 1;
@@ -441,6 +434,7 @@ int main()
             deleteFirstFromArgv(argv);
         }
 
+        // Handle then command   
         if (!strcmp(argv[0], "then"))
         {
             if (flagSeenIf == 1)
@@ -460,6 +454,7 @@ int main()
             }
         }
 
+        // Handle else command
         if (!strcmp(argv[0], "else"))
         {
             if (flagSeenThen == 1)
@@ -477,6 +472,7 @@ int main()
             }
         }
 
+        // Handle fi command
         if (!strcmp(argv[0], "fi"))
         {
             if (flagSeenElse == 1)
@@ -489,9 +485,11 @@ int main()
                 flagCanEnter = 1;
             }
         }
+
+        // If we didnt save the data yet, do so
         if (!inHistory)
         {
-            // printf("update\n");
+
             deepCopyArgv(argv, current->data);
             pnode next = (pnode)malloc(sizeof(node));
             current->next = next;
@@ -502,6 +500,7 @@ int main()
 
         inHistory = 0;
 
+        // Handle the quit case
         if (!strcmp(argv[0], "quit"))
         {
             printf("\ngood bye\n");
@@ -509,6 +508,7 @@ int main()
             exit(0);
         }
 
+        // Handle the read case
         if (flagCanEnter == 1 && i == 2 && !(strcmp(argv[0], "read")))
         {
 
@@ -520,14 +520,13 @@ int main()
             save_variable(strcat(str2, argv[1]), str);
         }
 
+        // Handle save a var
         if (flagCanEnter == 1 && i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "="))
         {
             save_variable(argv[0], argv[2]);
         }
 
-        // printf("im here can u see me? 699");
-        // fflush(stdout);
-
+        // Handle the repeat last command
         if (flagCanEnter == 1 && !strcmp(argv[0], "!!"))
         {
 
@@ -548,15 +547,13 @@ int main()
             deepCopyArgv(temp->data, argv);
         }
 
+        // Handle change prompt
         if (flagCanEnter == 1 && i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
         {
             strcpy(prompt, argv[2]);
             strcat(prompt, ": ");
             continue;
         }
-
-        // printf("im here can u see me? 799\n");
-        // fflush(stdout);
 
         /* Does command line end with & */
         if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[i - 1], "&"))
@@ -570,9 +567,7 @@ int main()
             amper = 0;
         }
 
-        // printf("im here can u see me? 800\n");
-        // fflush(stdout);
-
+        // 
         if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">"))
         {
             redirect = 1;
@@ -583,6 +578,7 @@ int main()
         else
             redirect = 0;
 
+        // handle change dir
         if (flagCanEnter == 1 && i == 2 && !strcmp(argv[0], "cd"))
 
         {
@@ -599,8 +595,8 @@ int main()
             }
         }
 
+        // handle Redirrect strerr
         if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
-
         {
             err = 1;
             outfile = argv[i - 1];
@@ -610,6 +606,7 @@ int main()
         else
             err = 0;
 
+        // Handle the read case
         if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">>"))
         {
 

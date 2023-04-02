@@ -321,7 +321,7 @@ int main()
     char *token;
     char *outfile;
     char prompt[1024];
-    int i, fd, amper, redirect, err, append, retid, status, flag, haveJobFlag;
+    int i, fd, amper, redirect, err, append, retid, status = 0, flag, haveJobFlag;
     char *argv[128];
     char *argv2[128];
 
@@ -360,8 +360,8 @@ int main()
                 handlePipes(argv2, output_string);
             }else{
                 handlePipes(argv2, command);
+                continue;
             }
-            // continue;
         }
         
         // printf("%s\n", command);
@@ -600,26 +600,23 @@ int main()
         }
         else
             append = 0;
-
-
-
     
         if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[0], "echo"))
         {
             if (!strcmp(argv[1], "$?"))
             {
-                int status;
                 int counter = 0;
                 char *ch = (char *)malloc(sizeof(char));
-                while (current->prev->prev->data[counter] != NULL)
+                while (current->prev->prev != NULL && current->prev->prev->data[counter] != NULL)
                 {
                     ch = strcat(ch, strcat(current->prev->prev->data[counter], " "));
                     counter++;
                 }
 
-                printf("command: %s\n", ch);
-                status = WEXITSTATUS(system(ch));
+                // printf("command: %s\n", ch);
+                // status = WEXITSTATUS(system(ch));
                 printf("status: %d\n", status);
+                continue;
             }
             else
             {
@@ -629,14 +626,10 @@ int main()
             }
         }
 
-        // printf("im here can u see me? 0\n");
-        // fflush(stdout);
-
         if (flag)
         {
             argv[i - 2] = NULL;
         }
-
 
         /* for commands not part of the shell command language */
         pid_t pid = fork();
@@ -685,20 +678,13 @@ int main()
                 // fflush(stdout);
                 execvp(argv[0], argv);
             }
-                
-                
-
         }
-            
+        
         /* parent continues here */
         if (amper == 0){
-            // int ans;
-            // retid = waitpid(pid, &ans, 0);
             retid = wait(&status);
             if (flagSeenIf == 1 && flagDoThen == -1 && flagSeenThen == 0)
             {
-                // printf("%d,\n", WEXITSTATUS(status));
-                // fflush(stdout);
                 flagDoThen = 1 - WEXITSTATUS(status);
             }
         }

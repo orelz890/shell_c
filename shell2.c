@@ -346,23 +346,6 @@ int main()
         fgets(command, 1024, stdin);
         command[strlen(command) - 1] = '\0';
 
-
-        if (strchr(command, '|'))
-        {
-            current->data[0] = (char *)malloc(strlen(command) + 1);
-            strcpy(current->data[0], command);
-            current->next = (pnode)malloc(sizeof(node));
-            current->next->prev = current;
-            current = current->next;
-            if (!strncmp(command, "if", 2)){
-                char* output_string = strchr(command, ' ') + 1;
-                handlePipes(argv2, output_string);
-            }else{
-                handlePipes(argv2, command);
-                continue;
-            }
-        }
-        
         // printf("%s\n", command);
 
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
@@ -373,26 +356,31 @@ int main()
                 {
                     printCmd(current->prev->data);
                     char *tmp = merge(current->prev->data);
-                    // printf("tmp: %s\n", tmp);
                     strcpy(command, tmp);
-
                     inHistory = 1;
-                    if (current->prev)
+                    if (current->prev->prev)
                     {
+
                         current = current->prev;
+                    }
+                    else
+                    {
+                        printf("Error: You react the last command\n");
                     }
                 }
                 else // down
                 {
 
-                    printCmd(current->next->data);
-                    char *tmp = merge(current->next->data);
-                    // printf("tmp: %s\n", tmp);
-                    strcpy(command, tmp);
-                    inHistory = 1;
                     if (current->next)
                     {
+                        printCmd(current->next->data);
+                        char *tmp = merge(current->next->data);
+                        // printf("tmp: %s\n", tmp);
+                        strcpy(command, tmp);
+                        inHistory = 1;
                         current = current->next;
+                    } else {
+                        printf("Error: There is no command exists\n");
                     }
                 }
                 break;
@@ -400,28 +388,30 @@ int main()
 
             // continue;
         }
-
         if (strchr(command, '|'))
         {
-            current->data[0] = (char *)malloc(strlen(command) + 1);
-            strcpy(current->data[0], command);
-            pnode next = (pnode)malloc(sizeof(node));
-            current->next = next;
-            current->next->prev = current;
-            current = current->next;
-            current->next = NULL;
-            handlePipes(argv, command);
-            continue;
+            if (!inHistory)
+            {
+                current->data[0] = (char *)malloc(sizeof(command) + 1);
+                strcpy(current->data[0], command);
+                pnode next = (pnode)malloc(sizeof(node));
+                current->next = next;
+                current->next->prev = current;
+                current = current->next;
+                current->next = NULL;
+            }
 
-            // current->data[0] = (char *)malloc(strlen(command) + 1);
-            // strcpy(current->data[0], command);
-            // current->next = (pnode)malloc(sizeof(node));
-            // current->next->prev = current;
-            // current = current->next;
-            // handlePipes(argv, command);
-            // continue;
+            if (!strncmp(command, "if", 2))
+            {
+                char *output_string = strchr(command, ' ') + 1;
+                handlePipes(argv2, output_string);
+            }
+            else
+            {
+                handlePipes(argv2, command);
+                continue;
+            }
         }
-        // printf("%s\n", command);
 
         /* parse command line */
         i = 0;
@@ -501,7 +491,7 @@ int main()
         }
         if (!inHistory)
         {
-            printf("update\n");
+            // printf("update\n");
             deepCopyArgv(argv, current->data);
             pnode next = (pnode)malloc(sizeof(node));
             current->next = next;
@@ -709,9 +699,9 @@ int main()
             }
         }
 
-        
         /* parent continues here */
-        if (amper == 0){
+        if (amper == 0)
+        {
             retid = wait(&status);
             if (flagSeenIf == 1 && flagDoThen == -1 && flagSeenThen == 0)
             {

@@ -323,6 +323,7 @@ int main()
     char prompt[1024];
     int i, fd, amper, redirect, err, append, retid, status, flag, haveJobFlag;
     char *argv[128];
+    char *argv2[128];
 
     int pipesNum = 0;
 
@@ -354,9 +355,15 @@ int main()
             current->next = (pnode)malloc(sizeof(node));
             current->next->prev = current;
             current = current->next;
-            handlePipes(argv, command);
-            continue;
+            if (!strncmp(command, "if", 2)){
+                char* output_string = strchr(command, ' ') + 1;
+                handlePipes(argv2, output_string);
+            }else{
+                handlePipes(argv2, command);
+            }
+            // continue;
         }
+        
         // printf("%s\n", command);
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
         {

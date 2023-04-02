@@ -348,37 +348,33 @@ int main()
 
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
         {
-            while (1)
+            pnode curr = NULL;
+            if (current != NULL && !strcmp(command, "\033[A"))
             {
-                pnode curr = NULL;
-                if (!strcmp(command, "\033[A"))
-                {
-                    curr = current->prev;
-                } else // down
-                {
-                    curr = current->next;
-
-                }
-                if (curr != NULL)
-                {
-
-                    printCmd(curr->data);
-                    char *tmp = merge(curr->data);
-                    strcpy(command, tmp);
-                    inHistory = 1;
-                    if (curr)
-                    {
-                        current = curr;
-                    }
-                }else {
-                    printf("Error: there is no command exists\n");
-                }
-                
-
-                break;
+                curr = current->prev;
+            } else if(current != NULL) // down
+            {
+                curr = current->next;
+            }
+            if (curr != NULL && curr->next != NULL)
+            {
+                printCmd(curr->data);
+                char *tmp = merge(curr->data);
+                strcpy(command, tmp);
+                inHistory = 1;
+                current = curr;
+            }else {
+                // printf("Error: there is no command exists\n");
+                // current = curr;
             }
 
+            if (strlen(command) <= 3)
+            {
+                continue;
+            }
+           
         }
+
 
         if (strchr(command, '|'))
         {
@@ -406,6 +402,7 @@ int main()
         }
 
 
+
         /* parse command line */
         i = 0;
         token = strtok(command, " ");
@@ -413,8 +410,8 @@ int main()
         while (token != NULL)
         {
             argv[i] = token;
-            current->data[i] = (char *)malloc(sizeof(token));
-            strcpy(current->data[i], token);
+            // current->data[i] = (char *)malloc(sizeof(token));
+            // strcpy(current->data[i], token);
             token = strtok(NULL, " ");
             i++;
         }
@@ -487,9 +484,9 @@ int main()
         }
 
         // If we didnt save the data yet, do so
-        if (!inHistory)
+        if (!inHistory && (strcmp(command, "\033[A") || strcmp(command, "\033[B")))
         {
-
+            // printf("enter\n");
             deepCopyArgv(argv, current->data);
             pnode next = (pnode)malloc(sizeof(node));
             current->next = next;
@@ -631,9 +628,7 @@ int main()
                     counter++;
                 }
 
-                // printf("command: %s\n", ch);
-                // status = WEXITSTATUS(system(ch));
-                printf("status: %d\n", status);
+                printf("%d\n", status);
                 continue;
             }
             else

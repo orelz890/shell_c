@@ -122,7 +122,7 @@ void deleteFirstFromArgv(char *src[128])
     int i;
     for (i = 0; i < 127; i++)
     {
-        if (src[i+1] != NULL)
+        if (src[i + 1] != NULL)
         {
             // printf("%d,", i);
             // fflush(stdout);
@@ -220,8 +220,6 @@ void printCmd(char *src[128])
         }
     }
 }
-
-
 
 void split(char **argv, int *pn, char *cmd, char *s)
 {
@@ -331,9 +329,9 @@ int main()
     root->prev = NULL;
     root->next = NULL;
 
-    int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0, flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1; 
+    int flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0, flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1;
     char fullIfCommend[1024];
-
+    int tmp = 0;
     pnode current = root;
     strcpy(prompt, "hello: ");
 
@@ -347,6 +345,7 @@ int main()
         printf("%s", prompt);
         fgets(command, 1024, stdin);
         command[strlen(command) - 1] = '\0';
+
 
         if (strchr(command, '|'))
         {
@@ -365,6 +364,7 @@ int main()
         }
         
         // printf("%s\n", command);
+
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
         {
             while (1)
@@ -384,6 +384,7 @@ int main()
                 }
                 else // down
                 {
+
                     printCmd(current->next->data);
                     char *tmp = merge(current->next->data);
                     // printf("tmp: %s\n", tmp);
@@ -400,6 +401,28 @@ int main()
             // continue;
         }
 
+        if (strchr(command, '|'))
+        {
+            current->data[0] = (char *)malloc(strlen(command) + 1);
+            strcpy(current->data[0], command);
+            pnode next = (pnode)malloc(sizeof(node));
+            current->next = next;
+            current->next->prev = current;
+            current = current->next;
+            current->next = NULL;
+            handlePipes(argv, command);
+            continue;
+
+            // current->data[0] = (char *)malloc(strlen(command) + 1);
+            // strcpy(current->data[0], command);
+            // current->next = (pnode)malloc(sizeof(node));
+            // current->next->prev = current;
+            // current = current->next;
+            // handlePipes(argv, command);
+            // continue;
+        }
+        // printf("%s\n", command);
+
         /* parse command line */
         i = 0;
         token = strtok(command, " ");
@@ -407,9 +430,9 @@ int main()
         while (token != NULL)
         {
             argv[i] = token;
-            // current->data[i] = (char*)malloc(sizeof(token));
-            // strcpy(current->data[i], token);
-            current->data[i] = token;
+            current->data[i] = (char *)malloc(sizeof(token));
+            strcpy(current->data[i], token);
+            // current->data[i] = token;
             token = strtok(NULL, " ");
             i++;
         }
@@ -419,8 +442,8 @@ int main()
         if (argv[0] == NULL)
             continue;
 
-
-        if (!strcmp(argv[0], "if")){
+        if (!strcmp(argv[0], "if"))
+        {
             flagSeenIf = 1;
             flagIsStream = 1;
             i--;
@@ -428,29 +451,35 @@ int main()
             deleteFirstFromArgv(argv);
         }
 
-        if (!strcmp(argv[0], "then")){
+        if (!strcmp(argv[0], "then"))
+        {
             if (flagSeenIf == 1)
             {
                 if (flagDoThen == 1)
                 {
 
                     flagCanEnter = 1;
-                }else{
+                }
+                else
+                {
                     flagCanEnter = 0;
                 }
-                
+
                 flagSeenThen = 1;
                 flagIsStream = 1;
             }
-
         }
 
-        if (!strcmp(argv[0], "else")){
-            if(flagSeenThen == 1){
+        if (!strcmp(argv[0], "else"))
+        {
+            if (flagSeenThen == 1)
+            {
                 if (flagDoThen == 0)
                 {
                     flagCanEnter = 1;
-                }else{
+                }
+                else
+                {
                     flagCanEnter = 0;
                 }
                 flagSeenElse = 1;
@@ -458,7 +487,8 @@ int main()
             }
         }
 
-        if (!strcmp(argv[0], "fi")){
+        if (!strcmp(argv[0], "fi"))
+        {
             if (flagSeenElse == 1)
             {
                 flagSeenIf = 0;
@@ -471,11 +501,13 @@ int main()
         }
         if (!inHistory)
         {
-
+            printf("update\n");
             deepCopyArgv(argv, current->data);
-            current->next = (pnode)malloc(sizeof(node));
+            pnode next = (pnode)malloc(sizeof(node));
+            current->next = next;
             current->next->prev = current;
             current = current->next;
+            current->next = NULL;
         }
 
         inHistory = 0;
@@ -487,8 +519,8 @@ int main()
             exit(0);
         }
 
-
-        if (flagCanEnter == 1 && i == 2 && !(strcmp(argv[0], "read"))){
+        if (flagCanEnter == 1 && i == 2 && !(strcmp(argv[0], "read")))
+        {
 
             char str[1022];
             char str2[2] = "$";
@@ -498,15 +530,16 @@ int main()
             save_variable(strcat(str2, argv[1]), str);
         }
 
-
-        if (flagCanEnter == 1 && i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "=")){
+        if (flagCanEnter == 1 && i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "="))
+        {
             save_variable(argv[0], argv[2]);
         }
 
         // printf("im here can u see me? 699");
         // fflush(stdout);
 
-        if (flagCanEnter == 1 && !strcmp(argv[0], "!!")){
+        if (flagCanEnter == 1 && !strcmp(argv[0], "!!"))
+        {
 
             pnode temp = current->prev->prev;
 
@@ -523,7 +556,6 @@ int main()
             }
 
             deepCopyArgv(temp->data, argv);
-
         }
 
         if (flagCanEnter == 1 && i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
@@ -536,7 +568,6 @@ int main()
         // printf("im here can u see me? 799\n");
         // fflush(stdout);
 
-
         /* Does command line end with & */
         if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[i - 1], "&"))
         {
@@ -544,7 +575,8 @@ int main()
             argv[i - 1] = NULL;
             haveJobFlag = 1;
         }
-        else{
+        else
+        {
             amper = 0;
         }
 
@@ -577,7 +609,6 @@ int main()
             }
         }
 
-
         if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
 
         {
@@ -600,7 +631,7 @@ int main()
         }
         else
             append = 0;
-    
+
         if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[0], "echo"))
         {
             if (!strcmp(argv[1], "$?"))
@@ -647,7 +678,7 @@ int main()
                 fflush(stdout);
                 continue;
             }
-            
+
             /* redirection of IO ? */
             if (redirect)
             {
@@ -670,15 +701,14 @@ int main()
             }
 
             if (flagSeenIf == 0 || (flagSeenIf == 1 && flagSeenThen == 0) ||
-                (flagIsStream == 0 && ((flagDoThen == 1 && flagSeenThen == 1 && flagSeenElse == 0) 
-                    || (flagDoThen == 0 && flagSeenElse == 1))
-                    ))
+                (flagIsStream == 0 && ((flagDoThen == 1 && flagSeenThen == 1 && flagSeenElse == 0) || (flagDoThen == 0 && flagSeenElse == 1))))
             {
                 // printf("flagSeenIf= %d, flagIsStream= %d, flagDoThen= %d, flagSeenThen= %d, flagSeenElse= %d",flagSeenIf,flagIsStream, flagDoThen, flagSeenThen, flagSeenElse);
                 // fflush(stdout);
                 execvp(argv[0], argv);
             }
         }
+
         
         /* parent continues here */
         if (amper == 0){
@@ -688,6 +718,5 @@ int main()
                 flagDoThen = 1 - WEXITSTATUS(status);
             }
         }
-
     }
 }

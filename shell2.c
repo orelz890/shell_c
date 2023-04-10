@@ -505,23 +505,6 @@ int main()
             exit(0);
         }
 
-        // Handle the read case
-        if (flagCanEnter == 1 && i == 2 && !(strcmp(argv[0], "read")))
-        {
-
-            char str[1022];
-            char str2[2] = "$";
-
-            fgets(str, sizeof(str), stdin);
-            str[strlen(str) - 1] = '\0';
-            save_variable(strcat(str2, argv[1]), str);
-        }
-
-        // Handle save a var
-        if (flagCanEnter == 1 && i == 3 && argv[0][0] == '$' && !strcmp(argv[1], "="))
-        {
-            save_variable(argv[0], argv[2]);
-        }
 
         // Handle the repeat last command
         if (flagCanEnter == 1 && !strcmp(argv[0], "!!"))
@@ -544,8 +527,27 @@ int main()
             deepCopyArgv(temp->data, argv);
         }
 
+        // Handle the read case
+        if (flagCanEnter == 1 && !(strcmp(argv[0], "read")))
+        {
+
+            char str[1022];
+            char str2[2] = "$";
+
+            fgets(str, sizeof(str), stdin);
+            str[strlen(str) - 1] = '\0';
+            save_variable(strcat(str2, argv[1]), str);
+        }
+
+        // Handle save a var
+        if (flagCanEnter == 1 && argv[0][0] == '$' && !strcmp(argv[1], "="))
+        {
+            save_variable(argv[0], argv[2]);
+            continue;
+        }
+
         // Handle change prompt
-        if (flagCanEnter == 1 && i == 3 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
+        if (flagCanEnter == 1  && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
         {
             strcpy(prompt, argv[2]);
             strcat(prompt, ": ");
@@ -565,7 +567,7 @@ int main()
         }
 
         // 
-        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">"))
+        if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[i - 2], ">"))
         {
             redirect = 1;
             outfile = argv[i - 1];
@@ -576,7 +578,7 @@ int main()
             redirect = 0;
 
         // handle change dir
-        if (flagCanEnter == 1 && i == 2 && !strcmp(argv[0], "cd"))
+        if (flagCanEnter == 1 && !strcmp(argv[0], "cd"))
 
         {
             int result = chdir(argv[1]);
@@ -593,7 +595,7 @@ int main()
         }
 
         // handle Redirrect strerr
-        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], "2>"))
+        if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[i - 2], "2>"))
         {
             err = 1;
             outfile = argv[i - 1];
@@ -604,7 +606,7 @@ int main()
             err = 0;
 
         // Handle the read case
-        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[i - 2], ">>"))
+        if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[i - 2], ">>"))
         {
 
             redirect = 1;
@@ -616,7 +618,7 @@ int main()
         else
             append = 0;
 
-        if (flagCanEnter == 1 && !haveJobFlag && i > 1 && !strcmp(argv[0], "echo"))
+        if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[0], "echo"))
         {
             if (!strcmp(argv[1], "$?"))
             {

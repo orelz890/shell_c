@@ -30,10 +30,9 @@
       * Example command: quit
       * Previous assumptions: None
 
-8. Handle control-c typed - the progrem won't stop but will print "You typed Control-C
-!". Stop every proccess excapt main.
+8. Handle control-c typed - the progrem won't stop but will print "You typed Control-C!" and Stop every proccess excapt main.
       * Example command: None
-      * Previous assumptions: None
+      * Previous assumptions: Pressing ctr-c is not a command so the shell will still wait for a proper command.
 
 9. Dealing with pipes
       * Example command: date | grep Fri
@@ -45,11 +44,11 @@
 
 11. Getting a value from the user
       * Example command: read name
-      * Previous assumptions: None
+      * Previous assumptions: If a string with spaces entered, only the first part will be stored (before the first space)
 
 12. Browse previous commands and run them
       * Example command: "down arrow" or "up arrow" + enter
-      * Previous assumptions: Can't run a previous if command
+      * Previous assumptions: Can't run a previous if command. If there are no more commands a message will be printed but the position will not change.
 
 13. IF/ELSE
       * Example command:

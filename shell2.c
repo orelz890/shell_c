@@ -80,17 +80,17 @@ void handle_tstp(int s)
 
 void handle_signal(int s)
 {
-    if (!inHistory)
-    {
+    // if (!inHistory)
+    // {
         pid_t pgid = getpgrp(); // get process group ID of current process
         signal(SIGTSTP, handle_tstp);
         killpg(pgid, SIGTSTP); // send SIGTERM to every process in the group
         printf("You typed Control-C!\n");
-    }
-    else
-    {
-        // exit from history mode
-    }
+    // }
+    // else
+    // {
+    //     // exit from history mode
+    // }
 }
 
 typedef struct Node

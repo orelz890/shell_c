@@ -402,7 +402,6 @@ int main()
         }
 
 
-
         /* parse command line */
         i = 0;
         token = strtok(command, " ");
@@ -426,6 +425,7 @@ int main()
         {
             flagSeenIf = 1;
             flagIsStream = 1;
+            flagCanEnter = 0;
             i--;
 
             deleteFirstFromArgv(argv);
@@ -509,22 +509,53 @@ int main()
         // Handle the repeat last command
         if (flagCanEnter == 1 && !strcmp(argv[0], "!!"))
         {
+            // printf("\n11111\n");
+            // fflush(stdout);
 
             pnode temp = current->prev->prev;
+                    // printCmd(curr->data);
+            char *tmp = merge(temp->data);
+            strcpy(command, tmp);
 
-            if (temp != NULL)
+            if (strchr(command,'|'))
             {
-                while (temp != NULL && !strcmp(*temp->data, "!!"))
+                if (temp != NULL && temp->next != NULL)
                 {
-                    temp = temp->prev;
+                    // temp->data;
+                    // printf("\nsefvsd\n");
+                    // fflush(stdout);
+                    inHistory = 1;
+                    current = temp;
                 }
-            }
-            if (temp == NULL)
-            {
+                handlePipes(argv2, command);
                 continue;
+                
             }
 
-            deepCopyArgv(temp->data, argv);
+            else{
+                // printf("\n11111\n");
+                // fflush(stdout);
+
+                if (temp != NULL)
+                {
+                    while (temp != NULL && !strcmp(*temp->data, "!!"))
+                    {
+                        // printf("\n22222\n");
+                        // fflush(stdout);
+
+                        temp = temp->prev;
+                    }
+                }
+                if (temp == NULL)
+                {
+                    continue;
+                }
+                // printf("\n333333\n");
+                // fflush(stdout);
+
+                deepCopyArgv(temp->data, argv);
+            }
+
         }
 
         // Handle the read case

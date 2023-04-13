@@ -24,7 +24,7 @@
 
 6. Repeat the last command
       * Example command: !!
-      * Previous assumptions: Can't repeat if/cd/read/pipe commands
+      * Previous assumptions: Can't repeat if/cd/read commands
 
 7. Exit shell
       * Example command: quit
@@ -36,7 +36,7 @@
 
 9. Dealing with pipes
       * Example command: date | grep Fri
-      * Previous assumptions: None
+      * Previous assumptions: We implemented the regular piping with the assumption that it supposed to work the same as the regular bash with the extention of multiple pipes.
 
 10. Storing variables
       * Example command: $person = David
@@ -69,7 +69,7 @@
 
       * Previous assumptions: If one want to use the if command he need to follow this exact pattern line by line:
 
-              if command
+              if command/pipes
 
               then
 

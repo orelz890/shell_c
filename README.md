@@ -1,3 +1,4 @@
+#Shell task
 
 
 ## Abilities:
@@ -24,7 +25,7 @@
 
 6. Repeat the last command
       * Example command: !!
-      * Previous assumptions: Can't repeat if/cd/read commands
+      * Previous assumptions: Can't repeat if/cd commands
 
 7. Exit shell
       * Example command: quit
@@ -44,7 +45,7 @@
 
 11. Getting a value from the user
       * Example command: read name
-      * Previous assumptions: If a string with spaces entered, only the first part will be stored (before the first space)
+      * Previous assumptions: If a string with spaces entered, only the first part will be stored (before the first space). If we did read twice the last value entered will be saved. There is a maximum amount of vars to save.
 
 12. Browse previous commands and run them
       * Example command: "down arrow" or "up arrow" + enter
@@ -67,7 +68,7 @@
 
               (line by line)
 
-      * Previous assumptions: If one want to use the if command he need to follow this exact pattern line by line:
+      * Previous assumptions: If given pipes commend it will exacute the first commend in the chain. If one want to use the if command he need to follow this exact pattern line by line:
 
               if command/pipes
 

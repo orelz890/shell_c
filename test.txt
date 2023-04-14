@@ -209,19 +209,29 @@ hello: ^[[B
 
 /* read */
 
-hello: read hagai
-123
-Variable saved.
-hello: echo hagai 
-hagai
-hello: echo $hagai
-123
-hello: echo $1
-$1
+hello: read a
+11
+hello: echo a
+a
+hello: read b
+22
+hello: echo b
+b
+hello: echo $b
+22
+hello: read a
+33
+hello: echo $a
+33
+hello: $a = 11
+hello: echo $a
+11
+hello: $a = 2
+hello: echo $a
+2
 
 /* vars */
 hello: $p = hagai
-Variable saved.
 hello: echo p
 p
 hello: echo $t 

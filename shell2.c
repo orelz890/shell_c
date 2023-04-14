@@ -30,10 +30,22 @@ void save_variable(char *name, char *value)
 {
     if (num_variables < MAX_VARIABLES)
     {
-        strcpy(variables[num_variables].name, name);
-        strcpy(variables[num_variables].value, value);
-        num_variables++;
-        printf("Variable saved.\n");
+        int exist = 0;
+        for (int i = 0; i < num_variables; i++)
+        {
+            if (!strcmp(variables[i].name, name))
+            {
+                exist = 1;
+                strcpy(variables[i].value, value);
+            }
+        }
+        if (!exist)
+        {    
+            strcpy(variables[num_variables].name, name);
+            strcpy(variables[num_variables].value, value);
+            num_variables++;
+        }
+        // printf("Variable saved.\n");
     }
     else
     {

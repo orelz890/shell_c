@@ -12,12 +12,10 @@
 #define MAX_VARIABLE_NAME_LEN 128
 #define MAX_VARIABLE_VALUE_LEN 1024
 
-int inHistory = 0;
-int status = 0;
+int inHistory = 0, status = 0;
 int i, fd, amper, redirect, err, append, retid, flag, haveJobFlag,
-        pipesNum = 0, flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0,
-        flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1, flag2 = 0;
-
+    pipesNum = 0, flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0,
+    flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1, flag2 = 0;
 typedef struct
 {
     char name[MAX_VARIABLE_NAME_LEN];
@@ -263,8 +261,7 @@ void handlePipes(char **argv, char *cmd)
                 return;
             }
         }
-        int pid = fork();
-        if (pid == 0)
+        if (fork() == 0)
         {
             if (i != nr - 1)
             {
@@ -298,7 +295,6 @@ void handlePipes(char **argv, char *cmd)
             close(fd[i - 1][1]);
         }
         wait(&status);
-        
     }
 }
 
@@ -325,7 +321,7 @@ int main()
     char *token;
     char *outfile;
     char prompt[1024];
-    
+
     char *argv[128];
     char *argv2[128];
 
@@ -393,8 +389,10 @@ int main()
                 char *output_string = strchr(command, ' ') + 1;
                 flagSeenIf = 1;
                 handlePipes(argv2, output_string);
-                if (flagDoThen == -1 && flagSeenThen == 0)
+                if (flagSeenIf == 1 && flagDoThen == -1 && flagSeenThen == 0)
                 {
+                    // printf("\n %d \n", WEXITSTATUS(status));
+                    // fflush(stdout);
                     flagDoThen = 1 - WEXITSTATUS(status);
                 }
                 continue;
@@ -602,6 +600,12 @@ int main()
                 {
                     perror("cd");
                 }
+                else
+                {
+                    char cwd[10000];
+                    getcwd(cwd, sizeof(cwd));
+                    // printf("curr path: %s\n", cwd);
+                }
             }
 
             // handle Redirrect strerr
@@ -640,7 +644,7 @@ int main()
                         counter++;
                     }
 
-                    printf("%d\n", WEXITSTATUS(status));
+                    printf("%d\n", status);
                     continue;
                 }
                 else

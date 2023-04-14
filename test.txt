@@ -130,7 +130,6 @@ j
 j
 hello: mkdir dir2
 hello: cd dir2
-curr path: /home/hagai/Desktop/advance programming/shell_c/hello/shell_c/dir/dir2
 hello: touch file.txt
 hello: echo hello >> file.txt
 hello: cat file.txt 
@@ -206,3 +205,26 @@ echo c
 c
 hello: ^[[B
 hello: ^[[B
+
+
+/* read */
+
+hello: read hagai
+123
+Variable saved.
+hello: echo hagai 
+hagai
+hello: echo $hagai
+123
+hello: echo $1
+$1
+
+/* vars */
+hello: $p = hagai
+Variable saved.
+hello: echo p
+p
+hello: echo $t 
+$t
+hello: echo $p
+hagai

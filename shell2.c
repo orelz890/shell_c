@@ -82,10 +82,10 @@ void handle_signal(int s)
 {
     // if (!inHistory)
     // {
-        pid_t pgid = getpgrp(); // get process group ID of current process
-        signal(SIGTSTP, handle_tstp);
-        killpg(pgid, SIGTSTP); // send SIGTERM to every process in the group
-        printf("You typed Control-C!\n");
+    pid_t pgid = getpgrp(); // get process group ID of current process
+    signal(SIGTSTP, handle_tstp);
+    killpg(pgid, SIGTSTP); // send SIGTERM to every process in the group
+    printf("You typed Control-C!\n");
     // }
     // else
     // {
@@ -181,7 +181,7 @@ void printArgv(char *src[128])
             // printf("Argument %d: %s       and len= %ld\n", i, src[i], strlen(src[i]));
             if (src[i + 1] != NULL)
             {
-                printf("%s\n", src[i]);
+                printf("%s ", src[i]);
             }
             else
             {
@@ -311,6 +311,14 @@ char *merge(char *argv[128])
     return result;
 }
 
+void handleQuit()
+{
+
+    printf("\ngood bye\n");
+    fflush(stdout);
+    exit(0);
+}
+
 int main()
 {
 
@@ -320,8 +328,8 @@ int main()
     char *outfile;
     char prompt[1024];
     int i, fd, amper, redirect, err, append, retid, flag, haveJobFlag, status = 0,
-        pipesNum = 0, flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0,
-        flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1, flag2 = 0;
+                                                                       pipesNum = 0, flagSeenIf = 0, flagSeenThen = 0, flagDoThen = -1, flagSeenFi = 0,
+                                                                       flagSeenElse = 0, flagIsStream = 0, flagCanEnter = 1, flag2 = 0;
     char *argv[128];
     char *argv2[128];
 
@@ -343,7 +351,6 @@ int main()
         fgets(command, 1024, stdin);
         command[strlen(command) - 1] = '\0';
 
-
         // Get last commends handler
 
         if (!strcmp(command, "\033[A") || !strcmp(command, "\033[B"))
@@ -352,7 +359,8 @@ int main()
             if (current != NULL && !strcmp(command, "\033[A"))
             {
                 curr = current->prev;
-            } else if(current != NULL) // down
+            }
+            else if (current != NULL) // down
             {
                 curr = current->next;
             }
@@ -363,7 +371,9 @@ int main()
                 strcpy(command, tmp);
                 inHistory = 1;
                 current = curr;
-            }else {
+            }
+            else
+            {
                 // printf("Error: there is no command exists\n");
                 // current = curr;
             }
@@ -372,9 +382,7 @@ int main()
             {
                 continue;
             }
-           
         }
-
 
         if (strchr(command, '|'))
         {
@@ -401,7 +409,6 @@ int main()
             }
         }
 
-
         /* parse command line */
         i = 0;
         token = strtok(command, " ");
@@ -425,13 +432,12 @@ int main()
         {
             flagSeenIf = 1;
             flagIsStream = 1;
-            flagCanEnter = 0;
             i--;
 
             deleteFirstFromArgv(argv);
         }
 
-        // Handle then command   
+        // Handle then command
         if (!strcmp(argv[0], "then"))
         {
             if (flagSeenIf == 1)
@@ -500,49 +506,37 @@ int main()
         // Handle the quit case
         if (!strcmp(argv[0], "quit"))
         {
-            printf("\ngood bye\n");
-            fflush(stdout);
-            exit(0);
+            handleQuit();
         }
-
 
         // Handle the repeat last command
         if (flagCanEnter == 1 && !strcmp(argv[0], "!!"))
         {
-            // printf("\n11111\n");
-            // fflush(stdout);
+            pnode curr = NULL;
 
-            pnode temp = current->prev->prev;
-                    // printCmd(curr->data);
-            char *tmp = merge(temp->data);
-            strcpy(command, tmp);
+            curr = current->prev->prev;
 
-            if (strchr(command,'|'))
+            if (curr != NULL && curr->next != NULL)
             {
-                if (temp != NULL && temp->next != NULL)
-                {
-                    // temp->data;
-                    // printf("\nsefvsd\n");
-                    // fflush(stdout);
-                    inHistory = 1;
-                    current = temp;
-                }
-                handlePipes(argv2, command);
-                continue;
-                
+                // printCmd(curr->data);
+                char *tmp = merge(curr->data);
+                strcpy(command, tmp);
+                inHistory = 1;
+                current = curr;
             }
 
-            else{
-                // printf("\n11111\n");
-                // fflush(stdout);
+            if (strchr(command, '|'))
+            {
+                handlePipes(argv2, command);
+            }
+            else
+            {
+                pnode temp = current->prev->prev;
 
                 if (temp != NULL)
                 {
                     while (temp != NULL && !strcmp(*temp->data, "!!"))
                     {
-                        // printf("\n22222\n");
-                        // fflush(stdout);
-
                         temp = temp->prev;
                     }
                 }
@@ -550,12 +544,9 @@ int main()
                 {
                     continue;
                 }
-                // printf("\n333333\n");
-                // fflush(stdout);
 
                 deepCopyArgv(temp->data, argv);
             }
-
         }
 
         // Handle the read case
@@ -578,7 +569,7 @@ int main()
         }
 
         // Handle change prompt
-        if (flagCanEnter == 1  && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
+        if (flagCanEnter == 1 && !strcmp(argv[0], "prompt") && !strcmp(argv[1], "="))
         {
             strcpy(prompt, argv[2]);
             strcat(prompt, ": ");
@@ -597,7 +588,7 @@ int main()
             amper = 0;
         }
 
-        // 
+        //
         if (flagCanEnter == 1 && !haveJobFlag && !strcmp(argv[i - 2], ">"))
         {
             redirect = 1;

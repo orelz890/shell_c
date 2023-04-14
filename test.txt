@@ -1,0 +1,147 @@
+hello: date >> h.txt
+hello: cat h.txt
+World
+Word
+Hello
+Hey
+Orel
+CMD
+Fri 14 Apr 10:15:00 IDT 2023
+hello: cat h.txt | sort
+CMD
+Fri 14 Apr 10:15:00 IDT 2023
+Hello
+Hey
+Orel
+Word
+World
+hello: date -u >> h.txt
+hello: cat h.txt 
+World
+Word
+Hello
+Hey
+Orel
+CMD
+Fri 14 Apr 10:15:00 IDT 2023
+Fri 14 Apr 07:15:57 UTC 2023
+hello: ls -l | sort
+-rw-rw-r-- 1 hagai hagai  1032 Apr 13 18:57 shell1.c
+-rw-rw-r-- 1 hagai hagai  1074 Apr 13 18:57 key.c
+-rw-rw-r-- 1 hagai hagai 17800 Apr 13 20:53 shell2.c
+-rw-rw-r-- 1 hagai hagai  2295 Apr 13 20:48 README.md
+-rw-rw-r-- 1 hagai hagai  2687 Apr 13 18:57 shell3.c
+-rw-rw-r-- 1 hagai hagai    30 Apr 13 20:50 a.txt
+-rw-rw-r-- 1 hagai hagai 54501 Apr 13 18:57 task1.pdf
+-rw-rw-r-- 1 hagai hagai    88 Apr 14 10:15 h.txt
+-rwxrwxr-x 1 hagai hagai 26920 Apr 13 20:56 myshell
+total 128
+hello: ls -l       
+total 128
+-rw-rw-r-- 1 hagai hagai    30 Apr 13 20:50 a.txt
+-rw-rw-r-- 1 hagai hagai    88 Apr 14 10:15 h.txt
+-rw-rw-r-- 1 hagai hagai  1074 Apr 13 18:57 key.c
+-rwxrwxr-x 1 hagai hagai 26920 Apr 13 20:56 myshell
+-rw-rw-r-- 1 hagai hagai  2295 Apr 13 20:48 README.md
+-rw-rw-r-- 1 hagai hagai  1032 Apr 13 18:57 shell1.c
+-rw-rw-r-- 1 hagai hagai 17800 Apr 13 20:53 shell2.c
+-rw-rw-r-- 1 hagai hagai  2687 Apr 13 18:57 shell3.c
+-rw-rw-r-- 1 hagai hagai 54501 Apr 13 18:57 task1.pdf
+hello: prompt = hey
+hey: prompt = hello
+hello: ^CYou typed Control-C!
+echo j
+j
+hello: cat h.txt | sort | uniq
+CMD
+Fri 14 Apr 07:15:57 UTC 2023
+Fri 14 Apr 10:15:00 IDT 2023
+Hello
+Hey
+Orel
+Word
+World
+hello: cat h.txt | sort
+CMD
+Fri 14 Apr 07:15:57 UTC 2023
+Fri 14 Apr 10:15:00 IDT 2023
+Hello
+Hey
+Orel
+Word
+World
+hello: touch file.txt
+hello: echo hello >> file.txt
+hello: cat file.txt
+hello
+hello: echo hey > file.txt
+hello: cat file.txt
+hey
+hello: echo hello
+hello
+hello: echo $?
+0
+hello: echo hello > file.txt
+hello: echo hello >> file.txt
+hello: cat file.txt
+hello
+hello
+hello: ^[[A
+cat file.txt
+hello
+hello
+hello: ^[[A
+echo hello >> file.txt
+hello: cat file.txt
+hello
+hello
+hello
+hello: echo hello >> file.txt
+hello: echo hello >> file.txt 
+hello: ^[[A
+echo hello >> file.txt
+hello: ^[[A
+echo hello >> file.txt
+hello: echo hii >> file.txt
+hello: cat file.txt | sort | uniq
+hello
+hii
+hello: cd dir
+curr path: /home/hagai/Desktop/advance programming/shell_c/hello/shell_c/dir
+hello: touch file.txt
+hello: cat file.txt
+hello: echo j >> file.txt
+hello: ^[[A
+echo j >> file.txt
+hello: ^[[A
+cat file.txt
+j
+j
+hello: cd dir
+curr path: /home/hagai/Desktop/advance programming/shell_c/hello/shell_c/dir
+hello: touch file.txt
+hello: cat file.txt
+hello: echo j >> file.txt
+hello: ^[[A
+echo j >> file.txt
+hello: ^[[A
+cat file.txt
+j
+j
+hello: mkdir dir2
+hello: cd dir2
+curr path: /home/hagai/Desktop/advance programming/shell_c/hello/shell_c/dir/dir2
+hello: touch file.txt
+hello: echo hello >> file.txt
+hello: cat file.txt 
+hello
+hello: echo $?
+0
+hello: echo hello world
+hello world
+hello: echo $? 
+0
+hello: ^CYou typed Control-C!
+quit
+
+good bye

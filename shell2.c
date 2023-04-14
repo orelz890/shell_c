@@ -602,12 +602,6 @@ int main()
                 {
                     perror("cd");
                 }
-                else
-                {
-                    char cwd[10000];
-                    getcwd(cwd, sizeof(cwd));
-                    printf("curr path: %s\n", cwd);
-                }
             }
 
             // handle Redirrect strerr

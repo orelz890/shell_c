@@ -141,7 +141,68 @@ hello: echo hello world
 hello world
 hello: echo $? 
 0
-hello: ^CYou typed Control-C!
-quit
+hello: pwd
+/home/hagai/Desktop/advance programming/shell_c/hello/shell_c
+hello: cd dir
+hello: pwd 
+/home/hagai/Desktop/advance programming/shell_c/hello/shell_c/dir
+hello: if date | grep Fri
+Fri 14 Apr 12:45:49 IDT 2023
+hello: then
+hello: echo hello
+hello
+hello: else
+hello: echo hey
+hello: echo g
+hello: fi
+hello: if true
+hello: then
+hello: echo j
+j
+hello: else
+hello: echo k
+hello: echo g
+hello: fi
+hello: if false
+hello: then
+hello: echo g
+hello: else 
+hello: echo k
+k
+hello: fi
+hello: if date | grep Sun
+hello: then
+hello: echo k
+hello: else
+hello: echo g
+g
+hello: fi
 
-good bye
+
+/* test for arrows */
+
+hello: echo a
+a
+hello: echo b
+b
+hello: echo c
+c
+hello: ^[[A
+echo c
+c
+hello: ^[[A
+echo b
+b
+hello: ^[[A
+echo a
+a
+hello: ^[[A
+hello: ^[[A
+hello: ^[[B
+echo b
+b
+hello: ^[[B
+echo c
+c
+hello: ^[[B
+hello: ^[[B

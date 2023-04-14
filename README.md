@@ -84,5 +84,5 @@
 
 
 ## How To Run:
- run `make` on command line
- then, `./myshell` and the shell start to work.
+ * run `make` on command line
+ * then, `./myshell` and the shell start to work.

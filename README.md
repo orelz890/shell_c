@@ -84,5 +84,5 @@
 
 
 ### How To Run:
-#### make
-#### ./myshell
+#### run *make* on command line
+#### then, *./myshell* and the shell start to work.

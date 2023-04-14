@@ -83,7 +83,6 @@
 
 
 
-
-
-
-
+### How To Run:
+#### make
+#### ./myshell
